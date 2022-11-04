@@ -6,3 +6,7 @@ WARNING : this is currently behing made for sc2 on a 1920x1080 screen. This is r
 # The idea behind the project
 This api should be able to provide meaningful information in the objective to build a bot afterwards.
 It should for example be able to find mineral patches on the minimap and infer on the position of futur expansion bases, or be able to locate and count the number of barracks, factories and spatioports in order to put them in control groups.
+
+# Why python
+Python is used for now even though we might need speed to do operations frenquently since we might want to use tensorflow to build a learning model afterwards.
+Building bindings from C++ to python for the most intensive functions will need to be evaluated.
