@@ -1,0 +1,5 @@
+pyautogui
+pytesseract
+cv2
+PIL
+python-Levenshtein

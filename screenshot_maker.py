@@ -7,6 +7,11 @@ import pytesseract
 import re
 from threading import Thread
 from PIL import Image
+from Levenshtein import distance as lev
+import units_dictionaries
+
+
+# This file extracts the data from a screenshot.
 
 
 # tesserocr is faster and usually more precise on its last version. To install it :
@@ -17,7 +22,7 @@ if USE_TESSEROCR:
     print(tesserocr.tesseract_version())  # print tesseract-ocr version
 
 
-current_dir = str(pathlib.Path(__file__).parent.absolute())
+current_dir = str(pathlib.Path(__file__).parent.absolute()) + "\\images\\screenshot_maker\\"
 
 
 def img_to_digits(img, is_supply = True):
@@ -40,12 +45,15 @@ def img_to_digits(img, is_supply = True):
     word = word.replace('P', '5')
     word = word.replace('S', '5')
     word = word.replace('B', '8')
-    word = word[:-1]
+    word = word.replace('\n', '')
 
     if is_supply:
         word = re.sub(r'[^\d/]+', '', word)
     else:
         word = re.sub('\D','', word)
+    
+    if word == '':
+        return '0'
     return word
 
 
@@ -60,7 +68,7 @@ def img_to_letters(img):
         tesserocr.image_to_text(Image.fromarray(img))
     word = word.replace('0', 'o')
     word = word.replace('2', 'z')
-    word = word[:-1].lower()
+    word = word.replace('\n', '').lower()
     return word
 
 
@@ -76,9 +84,9 @@ def supply_handle(image, supply_left, supply_right, debug = False):
     supply = cv2.cvtColor(image[23:33, 1763:1867], cv2.COLOR_BGR2GRAY)
     supply = prepare_for_ocr(supply, 220)
     if debug:
-        cv2.imwrite(current_dir + "\\images\\supply.png", supply)
+        cv2.imwrite(current_dir + "supply.png", supply)
     supply_str = img_to_digits(supply)
-    slash = supply_str.index('/')
+    slash = supply_str.find('/')
     if slash == -1:
         return
     supply_left[0] = int(supply_str[:slash])
@@ -88,7 +96,7 @@ def mineral_handle(image, minerals, debug = False):
     mineral = cv2.cvtColor(image[23:33, 1519:1594], cv2.COLOR_BGR2GRAY)
     mineral = prepare_for_ocr(mineral, 220)
     if debug:
-        cv2.imwrite(current_dir + "\\images\\mineral.png", mineral)
+        cv2.imwrite(current_dir + "mineral.png", mineral)
     minerals[0] = int(img_to_digits(mineral))
 
 def gas_handle(image, gas, debug = False):
@@ -102,22 +110,38 @@ def idle_workers_handle(image, idle_workers, debug = False):
     idle_worker = cv2.cvtColor(image[749:764, 48:77], cv2.COLOR_BGR2GRAY)
     idle_worker = prepare_for_ocr(idle_worker, 40)
     if debug:
-        cv2.imwrite(current_dir + "\\images\\idle_workers.png", idle_worker)
+        cv2.imwrite(current_dir + "idle_workers.png", idle_worker)
     idle_workers[0] = int(img_to_digits(idle_worker))
 
 def army_units_handle(image, army_units, debug = False):
     army_unit = cv2.cvtColor(image[749:763, 128:155], cv2.COLOR_BGR2GRAY)
     army_unit = prepare_for_ocr(army_unit, 40)
     if debug:
-        cv2.imwrite(current_dir + "\\images\\army_units.png", army_unit)
+        cv2.imwrite(current_dir + "army_units.png", army_unit)
     army_units[0] = int(img_to_digits(army_unit))
 
 def selected_single_handle(image, selected_singles, debug = False):
     selected_single = cv2.cvtColor(image[897:915, 810:1080], cv2.COLOR_BGR2GRAY)
     selected_single = prepare_for_ocr(selected_single, 40)
     if debug:
-        cv2.imwrite(current_dir + "\\images\\selected_single.png", selected_single)
-    selected_singles[0] = img_to_letters(selected_single)
+        cv2.imwrite(current_dir + "selected_single.png", selected_single)
+    
+    output = img_to_letters(selected_single)
+    min_dist = (100, '')
+    for key in units_dictionaries.building_prices:
+        distance = lev(output, key)
+        if distance < min_dist[0]:
+            min_dist = (distance, key)
+    for key in units_dictionaries.unit_prices_supply:
+        distance = lev(output, key)
+        if distance < min_dist[0]:
+            min_dist = (distance, key)
+    if min_dist[0] <= 2:
+        output = min_dist[1]
+    else:
+        output = ''
+
+    selected_singles[0] = output
 
 def minimap_handle(image, minimaps):
     minimaps[0] = image[808:1065, 25:291]
@@ -203,15 +227,14 @@ class screen_info:
         self.selected_single = self.selected_single[0]
 
         if debug:
-            print("supply_left =       " + str(self.supply_left))
-            print("supply_right =      " + str(self.supply_right))
+            print("supply_left =       " + str(self.supply_left) + "/" + str(self.supply_right))
             print("mineral =           " + str(self.minerals))
             print("gas =               " + str(self.gas))
             print("idle_workers =      " + str(self.idle_workers))
             print("army_units =        " + str(self.army_units))
             print("selected_single =   " + str(self.selected_single))
             
-            cv2.imwrite(current_dir + "\\images\\minimap.png", self.minimap)
-            cv2.imwrite(current_dir + "\\images\\building.png", self.building)
-            cv2.imwrite(current_dir + "\\images\\selected_group.png", self.selected_group)
-            cv2.imwrite(current_dir + "\\images\\game.png", self.game)
+            cv2.imwrite(current_dir + "minimap.png", self.minimap)
+            cv2.imwrite(current_dir + "building.png", self.building)
+            cv2.imwrite(current_dir + "selected_group.png", self.selected_group)
+            cv2.imwrite(current_dir + "game.png", self.game)
