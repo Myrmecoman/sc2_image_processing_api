@@ -1,29 +1,34 @@
 import pyautogui
 import cv2
 import numpy as np
-import time
 import pathlib
 import copy
 import pytesseract
 import re
 from threading import Thread
+from PIL import Image
+
+
+# tesserocr is faster and usually more precise on its last version. To install it :
+# https://github.com/sirfz/tesserocr
+USE_TESSEROCR = False
+if USE_TESSEROCR:
+    import tesserocr
+    print(tesserocr.tesseract_version())  # print tesseract-ocr version
 
 
 current_dir = str(pathlib.Path(__file__).parent.absolute())
 
 
-def prepare_for_ocr(img, thresh):
-    img = cv2.threshold(img, thresh, 255, cv2.THRESH_BINARY_INV)[1]
-    bordersize = 8
-    img = cv2.copyMakeBorder(img, top=bordersize, bottom=bordersize, left=bordersize, right=bordersize, borderType=cv2.BORDER_CONSTANT, value=255)
-    img = cv2.resize(img, (img.shape[1] * 4, img.shape[0] * 4))
-    return img
-    
-
 def img_to_digits(img, is_supply = True):
-    custom_config = r'--oem 3 --psm 7'
-    pytesseract.pytesseract.tesseract_cmd = r'C:\\Program Files\\Tesseract-OCR\\tesseract.exe'
-    word = pytesseract.image_to_string(img, output_type=pytesseract.Output.STRING, config=custom_config, lang="eng")
+
+    word = ""
+    if not USE_TESSEROCR:
+        custom_config = r'--oem 3 --psm 7'
+        pytesseract.pytesseract.tesseract_cmd = r'C:\\Program Files\\Tesseract-OCR\\tesseract.exe'
+        word = pytesseract.image_to_string(img, output_type=pytesseract.Output.STRING, config=custom_config, lang="eng")
+    else:
+        tesserocr.image_to_text(Image.fromarray(img))
     word = word.replace('o', '0')
     word = word.replace('O', '0')
     word = word.replace('I', '1')
@@ -45,34 +50,49 @@ def img_to_digits(img, is_supply = True):
 
 
 def img_to_letters(img):
-    custom_config = r'--oem 3 --psm 7'
-    pytesseract.pytesseract.tesseract_cmd = r'C:\\Program Files\\Tesseract-OCR\\tesseract.exe'
-    word = pytesseract.image_to_string(img, output_type=pytesseract.Output.STRING, config=custom_config, lang="eng")
+
+    word = ""
+    if not USE_TESSEROCR:
+        custom_config = r'--oem 3 --psm 7'
+        pytesseract.pytesseract.tesseract_cmd = r'C:\\Program Files\\Tesseract-OCR\\tesseract.exe'
+        word = pytesseract.image_to_string(img, output_type=pytesseract.Output.STRING, config=custom_config, lang="eng")
+    else:
+        tesserocr.image_to_text(Image.fromarray(img))
     word = word.replace('0', 'o')
     word = word.replace('2', 'z')
     word = word[:-1].lower()
     return word
 
+
+def prepare_for_ocr(img, thresh):
+    img = cv2.threshold(img, thresh, 255, cv2.THRESH_BINARY_INV)[1]
+    bordersize = 8
+    img = cv2.copyMakeBorder(img, top=bordersize, bottom=bordersize, left=bordersize, right=bordersize, borderType=cv2.BORDER_CONSTANT, value=255)
+    img = cv2.resize(img, (img.shape[1] * 4, img.shape[0] * 4))
+    return img
+
 # multithreaded functions -------------------------------------------------------------------------------
 def supply_handle(image, supply_left, supply_right, debug = False):
-    supply = cv2.cvtColor(image[22:34, 1803:1907], cv2.COLOR_BGR2GRAY)
+    supply = cv2.cvtColor(image[23:33, 1763:1867], cv2.COLOR_BGR2GRAY)
     supply = prepare_for_ocr(supply, 220)
     if debug:
         cv2.imwrite(current_dir + "\\images\\supply.png", supply)
     supply_str = img_to_digits(supply)
     slash = supply_str.index('/')
+    if slash == -1:
+        return
     supply_left[0] = int(supply_str[:slash])
     supply_right[0] = int(supply_str[slash + 1:])
 
 def mineral_handle(image, minerals, debug = False):
-    mineral = cv2.cvtColor(image[22:34, 1559:1634], cv2.COLOR_BGR2GRAY)
+    mineral = cv2.cvtColor(image[23:33, 1519:1594], cv2.COLOR_BGR2GRAY)
     mineral = prepare_for_ocr(mineral, 220)
     if debug:
         cv2.imwrite(current_dir + "\\images\\mineral.png", mineral)
     minerals[0] = int(img_to_digits(mineral))
 
 def gas_handle(image, gas, debug = False):
-    gas_temp = cv2.cvtColor(image[22:34, 1682:1752], cv2.COLOR_BGR2GRAY)
+    gas_temp = cv2.cvtColor(image[23:33, 1642:1712], cv2.COLOR_BGR2GRAY)
     gas_temp = prepare_for_ocr(gas_temp, 220)
     if debug:
         cv2.imwrite(current_dir + "\\images\\gas.png", gas_temp)
@@ -189,19 +209,9 @@ class screen_info:
             print("gas =               " + str(self.gas))
             print("idle_workers =      " + str(self.idle_workers))
             print("army_units =        " + str(self.army_units))
-            print("selected_single =   " + self.selected_single)
+            print("selected_single =   " + str(self.selected_single))
             
             cv2.imwrite(current_dir + "\\images\\minimap.png", self.minimap)
             cv2.imwrite(current_dir + "\\images\\building.png", self.building)
             cv2.imwrite(current_dir + "\\images\\selected_group.png", self.selected_group)
             cv2.imwrite(current_dir + "\\images\\game.png", self.game)
-
-
-print("starting")
-time.sleep(4)
-start_time = time.time()
-
-screen_infos = screen_info(True)
-
-print("%s sec" % (time.time() - start_time))
-print("done")
