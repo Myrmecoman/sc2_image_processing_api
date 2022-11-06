@@ -27,11 +27,13 @@ if USE_TESSEROCR:
 current_dir = str(pathlib.Path(__file__).parent.absolute()) + "\\output\\screenshot_maker\\"
 
 
-def img_to_digits(img, is_supply = True):
+def img_to_digits(img, is_supply = False):
     # cropping each character
     num_labels, labels_ids, stats, centroids = cv2.connectedComponentsWithStats(img, 4, cv2.CV_32S)
     cropped = []
     for i in range(1, num_labels):
+        if stats[i][cv2.CC_STAT_HEIGHT] < img.shape[0] - 3: # removing small components which are certainly not characters
+            continue
         new_cropped = img[:, (stats[i][cv2.CC_STAT_LEFT] - 1):(stats[i][cv2.CC_STAT_LEFT] + stats[i][cv2.CC_STAT_WIDTH] + 1)]
         cropped.append(cv2.copyMakeBorder(new_cropped, top=2, bottom=2, left=2, right=2, borderType=cv2.BORDER_CONSTANT, value=0))
 
@@ -86,6 +88,41 @@ def img_to_digits_idle_scvs_and_army(img):
     return word
 
 
+def img_to_digits_extraction(img):
+    # cropping each character
+    num_labels, labels_ids, stats, centroids = cv2.connectedComponentsWithStats(img, 4, cv2.CV_32S)
+    cropped = []
+    for i in range(1, num_labels):
+        if stats[i][cv2.CC_STAT_HEIGHT] < img.shape[0] - 3: # removing small components which are certainly not characters
+            continue
+        if stats[i][cv2.CC_STAT_AREA] > 100: # too big, can't be a character
+            continue
+        new_cropped = img[:, (stats[i][cv2.CC_STAT_LEFT] - 1):(stats[i][cv2.CC_STAT_LEFT] + stats[i][cv2.CC_STAT_WIDTH] + 1)]
+        cropped.append(cv2.copyMakeBorder(new_cropped, top=2, bottom=2, left=2, right=2, borderType=cv2.BORDER_CONSTANT, value=0))
+
+    # loading templates
+    templates = []
+    for i in range(10):
+        templates.append(cv2.imread(str(pathlib.Path(__file__).parent.absolute()) + "\\templates\\numbers_supply_minerals_gas\\" + str(i) + ".png", cv2.IMREAD_GRAYSCALE))
+    templates.append(cv2.imread(str(pathlib.Path(__file__).parent.absolute()) + "\\templates\\numbers_supply_minerals_gas\\slash.png", cv2.IMREAD_GRAYSCALE))
+
+    # matching each character with each template and keeping best match
+    word = ""
+    for c in range(len(cropped)):
+        char_result = []
+        for i in range(len(templates)):
+            res = cv2.matchTemplate(cropped[c], templates[i], cv2.TM_CCOEFF_NORMED)
+            _, max_val, _, _ = cv2.minMaxLoc(res)
+            char_result.append(max_val)
+        max_index = char_result.index(max(char_result))
+        if max_index == 10:
+            word += '/'
+        else:
+            word += str(max_index)
+
+    return word
+
+
 def img_to_letters(img):
     word = ""
     if not USE_TESSEROCR:
@@ -115,11 +152,11 @@ def prepare_for_ocr(img, thresh):
 
 # multithreaded functions -------------------------------------------------------------------------------
 def supply_handle(image, supply_left, supply_right, debug = False):
-    supply = cv2.cvtColor(image[22:34, 1765:1867], cv2.COLOR_BGR2GRAY)
+    supply = image[22:34, 1765:1867, 2]
     supply = prepare_for_matching(supply, 220)
     if debug:
         cv2.imwrite(current_dir + "supply.png", supply)
-    supply_str = img_to_digits(supply)
+    supply_str = img_to_digits(supply, True)
     slash = supply_str.find('/')
     if slash == -1:
         return
@@ -127,29 +164,29 @@ def supply_handle(image, supply_left, supply_right, debug = False):
     supply_right[0] = int(supply_str[slash + 1:])
 
 def mineral_handle(image, minerals, debug = False):
-    mineral = cv2.cvtColor(image[22:34, 1519:1594], cv2.COLOR_BGR2GRAY)
-    mineral = prepare_for_matching(mineral, 220)
+    mineral = image[22:34, 1519:1594, 2]
+    mineral = prepare_for_matching(mineral, 230)
     if debug:
         cv2.imwrite(current_dir + "mineral.png", mineral)
     minerals[0] = int(img_to_digits(mineral))
 
 def gas_handle(image, gas, debug = False):
-    gas_temp = cv2.cvtColor(image[22:34, 1642:1712], cv2.COLOR_BGR2GRAY)
-    gas_temp = prepare_for_matching(gas_temp, 220)
+    gas_temp = image[22:34, 1645:1712, 2]
+    gas_temp = prepare_for_matching(gas_temp, 230)
     if debug:
         cv2.imwrite(current_dir + "gas.png", gas_temp)
     gas[0] = int(img_to_digits(gas_temp))
 
 def idle_workers_handle(image, idle_workers, debug = False):
     idle_worker = cv2.cvtColor(image[749:764, 48:77], cv2.COLOR_BGR2GRAY)
-    idle_worker = prepare_for_matching(idle_worker, 40)
+    idle_worker = prepare_for_matching(idle_worker, 80)
     if debug:
         cv2.imwrite(current_dir + "idle_workers.png", idle_worker)
     idle_workers[0] = int(img_to_digits_idle_scvs_and_army(idle_worker))
 
 def army_units_handle(image, army_units, debug = False):
     army_unit = cv2.cvtColor(image[749:763, 128:155], cv2.COLOR_BGR2GRAY)
-    army_unit = prepare_for_matching(army_unit, 40)
+    army_unit = prepare_for_matching(army_unit, 80)
     if debug:
         cv2.imwrite(current_dir + "army_units.png", army_unit)
     army_units[0] = int(img_to_digits_idle_scvs_and_army(army_unit))
@@ -192,22 +229,66 @@ def game_handle(image, games):
     game[783:, 1518:] = 0
     game[745:, :359] = 0
     games[0] = game
+
+def extraction_handle(image, minerals, gases):
+    mineral_temp = cv2.imread(str(pathlib.Path(__file__).parent.absolute()) + "\\templates\\resource_templates\\mineral.png")
+    gas_temp = cv2.imread(str(pathlib.Path(__file__).parent.absolute()) + "\\templates\\resource_templates\\gas.png")
+
+    res_mineral = cv2.matchTemplate(image, mineral_temp, cv2.TM_CCOEFF_NORMED)
+    res_gas = cv2.matchTemplate(image, gas_temp, cv2.TM_CCOEFF_NORMED)
+
+    threshold = 0.9
+    loc_mineral = np.where(res_mineral >= threshold)
+    loc_gas = np.where(res_gas >= threshold)
+
+    mineral_list = []
+    for pt in zip(*loc_mineral[::-1]):
+        extraction = image[pt[1]:pt[1] + mineral_temp.shape[1] - 2, (pt[0] + 105):(pt[0] + 180), 2]
+        extraction = prepare_for_matching(extraction, 130)
+        extraction[:, 12] = 0
+        cv2.imwrite(current_dir + "mineral_extraction" + str(len(mineral_list)) + ".png", extraction)
+        extraction = img_to_digits_extraction(extraction)
+        slash = extraction.find('/')
+        if slash == -1:
+            print("ERROR: no / found")
+        else:
+            mineral_list.append(((int(extraction[:slash]), int(extraction[slash + 1:])), (pt[0] + mineral_temp.shape[0] - 1, pt[1] + mineral_temp.shape[1] - 1)))
+
+    gas_list = []
+    for pt in zip(*loc_gas[::-1]):
+        extraction = image[pt[1]:pt[1] + gas_temp.shape[1], (pt[0] + 103):(pt[0] + 150), 2]
+        extraction = prepare_for_matching(extraction, 130)
+        extraction[:, 13] = 0
+        extraction[:, 24] = 0
+        cv2.imwrite(current_dir + "gas_extraction" + str(len(gas_list)) + ".png", extraction)
+        extraction = img_to_digits_extraction(extraction)
+        slash = extraction.find('/')
+        if slash == -1:
+            print("ERROR: no / found")
+        else:
+            gas_list.append(((int(extraction[:slash]), 3), (pt[0] + gas_temp.shape[0] + 50, pt[1] + gas_temp.shape[1] - 1)))
+    
+    minerals[0] = mineral_list
+    gases[0] = gas_list
+
 # multithreaded functions -------------------------------------------------------------------------------
 
 
 class screen_info:
-
-    minimap = [None]*1
-    game = [None]*1
-    building = [None]*1
-    selected_group = [None]*1
-    supply_left = [None]*1
-    supply_right = [None]*1
-    minerals = [None]*1
-    gas = [None]*1
-    idle_workers = [None]*1
-    army_units = [None]*1
-    selected_single = [None]*1
+    # setting [None]*1 in order to pass as pointers in threads
+    minimap = [None]*1                  # image
+    game = [None]*1                     # image
+    building = [None]*1                 # image
+    selected_group = [None]*1           # image
+    supply_left = [None]*1              # int
+    supply_right = [None]*1             # int
+    minerals = [None]*1                 # int
+    gas = [None]*1                      # int
+    idle_workers = [None]*1             # int
+    army_units = [None]*1               # int
+    selected_single = [None]*1          # string
+    mineral_extraction_infos = [None]*1 # list of ((int, int), (int, int)) corresponding to (( nb_workers/workers_max ), ( position_x, position_y )) where position is click position to select the command center
+    gas_extraction_infos = [None]*1     # list of ((int, int), (int, int)) corresponding to (( nb_workers/workers_max ), ( position_x, position_y )) where position is click position to select the refinery
 
 
     def __init__(self, debug = False):
@@ -224,6 +305,7 @@ class screen_info:
         building_thread = Thread(target=building_handle, args=(image, self.building))
         selected_group_thread = Thread(target=selected_group_handle, args=(image, self.selected_group))
         game_thread = Thread(target=game_handle, args=(image, self.game))
+        extraction_thread = Thread(target=extraction_handle, args=(image, self.mineral_extraction_infos, self.gas_extraction_infos))
 
         supply_thread.start()
         mineral_thread.start()
@@ -235,6 +317,7 @@ class screen_info:
         building_thread.start()
         selected_group_thread.start()
         game_thread.start()
+        extraction_thread.start()
 
         supply_thread.join()
         mineral_thread.join()
@@ -246,6 +329,7 @@ class screen_info:
         building_thread.join()
         selected_group_thread.join()
         game_thread.join()
+        extraction_thread.join()
 
         self.minimap = self.minimap[0]
         self.game = self.game[0]
@@ -258,14 +342,18 @@ class screen_info:
         self.idle_workers = self.idle_workers[0]
         self.army_units = self.army_units[0]
         self.selected_single = self.selected_single[0]
+        self.mineral_extraction_infos = self.mineral_extraction_infos[0]
+        self.gas_extraction_infos = self.gas_extraction_infos[0]
 
         if debug:
-            print("supply_left =       " + str(self.supply_left) + "/" + str(self.supply_right))
-            print("mineral =           " + str(self.minerals))
-            print("gas =               " + str(self.gas))
-            print("idle_workers =      " + str(self.idle_workers))
-            print("army_units =        " + str(self.army_units))
-            print("selected_single =   " + str(self.selected_single))
+            print("supply =                   " + str(self.supply_left) + "/" + str(self.supply_right))
+            print("mineral =                  " + str(self.minerals))
+            print("gas =                      " + str(self.gas))
+            print("idle_workers =             " + str(self.idle_workers))
+            print("army_units =               " + str(self.army_units))
+            print("selected_single =          " + str(self.selected_single))
+            print("mineral_extraction_infos = " + str(self.mineral_extraction_infos))
+            print("gas_extraction_infos =     " + str(self.gas_extraction_infos))
             
             cv2.imwrite(current_dir + "minimap.png", self.minimap)
             cv2.imwrite(current_dir + "building.png", self.building)
