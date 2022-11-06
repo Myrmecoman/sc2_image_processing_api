@@ -4,7 +4,7 @@ import pathlib
 import copy
 
 
-current_dir = str(pathlib.Path(__file__).parent.absolute()) + "\\images\\minimap_segmenter\\"
+current_dir = str(pathlib.Path(__file__).parent.absolute()) + "\\output\\minimap_segmenter\\"
 
 
 class minimap_info:

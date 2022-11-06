@@ -21,8 +21,6 @@ Tesserocr is reputed faster and usually more precise than pytesseract, however i
 - If you want to use pytesseract, set the USE_TESSETOCR variable to False in the screenshot_maker.py script.
 - If you want to use tesserocr : https://github.com/sirfz/tesserocr
 
-WARNING : For now the code only works with pytesseract. The issues with tesserocr will need to be investigated later.
-
 # Files description
 - clicker_helper : provides location to click on the middle or right window of the game.
 - minimap_segmenter : to be called only once at game startup. Extracts possible expansion bases locations using mineral patches locations. Also provides images corresponding to ressources, ally positions and enemy positions.

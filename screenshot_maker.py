@@ -9,67 +9,100 @@ from threading import Thread
 from PIL import Image
 from Levenshtein import distance as lev
 import units_dictionaries
+import random
 
 
 # This file extracts the data from a screenshot.
+# The ocr only extracts text data, numbers are extracted using template matching
 
 
 # tesserocr is faster and usually more precise on its last version. To install it :
 # https://github.com/sirfz/tesserocr
-USE_TESSEROCR = False
+USE_TESSEROCR = True
 if USE_TESSEROCR:
     import tesserocr
-    print(tesserocr.tesseract_version())  # print tesseract-ocr version
+    #print(tesserocr.tesseract_version())  # print tesseract-ocr version
 
 
-current_dir = str(pathlib.Path(__file__).parent.absolute()) + "\\images\\screenshot_maker\\"
+current_dir = str(pathlib.Path(__file__).parent.absolute()) + "\\output\\screenshot_maker\\"
 
 
 def img_to_digits(img, is_supply = True):
+    # cropping each character
+    num_labels, labels_ids, stats, centroids = cv2.connectedComponentsWithStats(img, 4, cv2.CV_32S)
+    cropped = []
+    for i in range(1, num_labels):
+        new_cropped = img[:, (stats[i][cv2.CC_STAT_LEFT] - 1):(stats[i][cv2.CC_STAT_LEFT] + stats[i][cv2.CC_STAT_WIDTH] + 1)]
+        cropped.append(cv2.copyMakeBorder(new_cropped, top=2, bottom=2, left=2, right=2, borderType=cv2.BORDER_CONSTANT, value=0))
 
-    word = ""
-    if not USE_TESSEROCR:
-        custom_config = r'--oem 3 --psm 7'
-        pytesseract.pytesseract.tesseract_cmd = r'C:\\Program Files\\Tesseract-OCR\\tesseract.exe'
-        word = pytesseract.image_to_string(img, output_type=pytesseract.Output.STRING, config=custom_config, lang="eng")
-    else:
-        tesserocr.image_to_text(Image.fromarray(img))
-    word = word.replace('o', '0')
-    word = word.replace('O', '0')
-    word = word.replace('I', '1')
-    word = word.replace('l', '1')
-    word = word.replace('T', '1')
-    word = word.replace('Z', '2')
-    word = word.replace('z', '2')
-    word = word.replace('A', '4')
-    word = word.replace('P', '5')
-    word = word.replace('S', '5')
-    word = word.replace('B', '8')
-    word = word.replace('\n', '')
-
+    # loading templates
+    templates = []
+    for i in range(10):
+        templates.append(cv2.imread(str(pathlib.Path(__file__).parent.absolute()) + "\\templates\\numbers_supply_minerals_gas\\" + str(i) + ".png", cv2.IMREAD_GRAYSCALE))
     if is_supply:
-        word = re.sub(r'[^\d/]+', '', word)
-    else:
-        word = re.sub('\D','', word)
-    
-    if word == '':
-        return '0'
+        templates.append(cv2.imread(str(pathlib.Path(__file__).parent.absolute()) + "\\templates\\numbers_supply_minerals_gas\\slash.png", cv2.IMREAD_GRAYSCALE))
+
+    # matching each character with each template and keeping best match
+    word = ""
+    for c in range(len(cropped)):
+        char_result = []
+        for i in range(len(templates)):
+            res = cv2.matchTemplate(cropped[c], templates[i], cv2.TM_CCOEFF_NORMED)
+            _, max_val, _, _ = cv2.minMaxLoc(res)
+            char_result.append(max_val)
+        max_index = char_result.index(max(char_result))
+        if max_index == 10:
+            word += '/'
+        else:
+            word += str(max_index)
+
+    return word
+
+
+def img_to_digits_idle_scvs_and_army(img):
+    # cropping each character
+    num_labels, labels_ids, stats, centroids = cv2.connectedComponentsWithStats(img, 4, cv2.CV_32S)
+    cropped = []
+    for i in range(1, num_labels):
+        new_cropped = img[:, (stats[i][cv2.CC_STAT_LEFT] - 1):(stats[i][cv2.CC_STAT_LEFT] + stats[i][cv2.CC_STAT_WIDTH] + 1)]
+        cropped.append(cv2.copyMakeBorder(new_cropped, top=2, bottom=2, left=2, right=2, borderType=cv2.BORDER_CONSTANT, value=0))
+
+    # loading templates
+    templates = []
+    for i in range(10):
+        templates.append(cv2.imread(str(pathlib.Path(__file__).parent.absolute()) + "\\templates\\numbers_workers_army\\" + str(i) + ".png", cv2.IMREAD_GRAYSCALE))
+
+    # matching each character with each template and keeping best match
+    word = ""
+    for c in range(len(cropped)):
+        char_result = []
+        for i in range(len(templates)):
+            res = cv2.matchTemplate(cropped[c], templates[i], cv2.TM_CCOEFF_NORMED)
+            _, max_val, _, _ = cv2.minMaxLoc(res)
+            char_result.append(max_val)
+        max_index = char_result.index(max(char_result))
+        word += str(max_index)
+
     return word
 
 
 def img_to_letters(img):
-
     word = ""
     if not USE_TESSEROCR:
         custom_config = r'--oem 3 --psm 7'
         pytesseract.pytesseract.tesseract_cmd = r'C:\\Program Files\\Tesseract-OCR\\tesseract.exe'
         word = pytesseract.image_to_string(img, output_type=pytesseract.Output.STRING, config=custom_config, lang="eng")
     else:
-        tesserocr.image_to_text(Image.fromarray(img))
+        word = tesserocr.image_to_text(Image.fromarray(img))
     word = word.replace('0', 'o')
     word = word.replace('2', 'z')
     word = word.replace('\n', '').lower()
     return word
+
+
+def prepare_for_matching(img, thresh):
+    img = cv2.threshold(img, thresh, 255, cv2.THRESH_BINARY)[1]
+    return img
 
 
 def prepare_for_ocr(img, thresh):
@@ -79,10 +112,11 @@ def prepare_for_ocr(img, thresh):
     img = cv2.resize(img, (img.shape[1] * 4, img.shape[0] * 4))
     return img
 
+
 # multithreaded functions -------------------------------------------------------------------------------
 def supply_handle(image, supply_left, supply_right, debug = False):
-    supply = cv2.cvtColor(image[23:33, 1763:1867], cv2.COLOR_BGR2GRAY)
-    supply = prepare_for_ocr(supply, 220)
+    supply = cv2.cvtColor(image[22:34, 1765:1867], cv2.COLOR_BGR2GRAY)
+    supply = prepare_for_matching(supply, 220)
     if debug:
         cv2.imwrite(current_dir + "supply.png", supply)
     supply_str = img_to_digits(supply)
@@ -93,32 +127,32 @@ def supply_handle(image, supply_left, supply_right, debug = False):
     supply_right[0] = int(supply_str[slash + 1:])
 
 def mineral_handle(image, minerals, debug = False):
-    mineral = cv2.cvtColor(image[23:33, 1519:1594], cv2.COLOR_BGR2GRAY)
-    mineral = prepare_for_ocr(mineral, 220)
+    mineral = cv2.cvtColor(image[22:34, 1519:1594], cv2.COLOR_BGR2GRAY)
+    mineral = prepare_for_matching(mineral, 220)
     if debug:
         cv2.imwrite(current_dir + "mineral.png", mineral)
     minerals[0] = int(img_to_digits(mineral))
 
 def gas_handle(image, gas, debug = False):
-    gas_temp = cv2.cvtColor(image[23:33, 1642:1712], cv2.COLOR_BGR2GRAY)
-    gas_temp = prepare_for_ocr(gas_temp, 220)
+    gas_temp = cv2.cvtColor(image[22:34, 1642:1712], cv2.COLOR_BGR2GRAY)
+    gas_temp = prepare_for_matching(gas_temp, 220)
     if debug:
-        cv2.imwrite(current_dir + "\\images\\gas.png", gas_temp)
+        cv2.imwrite(current_dir + "gas.png", gas_temp)
     gas[0] = int(img_to_digits(gas_temp))
 
 def idle_workers_handle(image, idle_workers, debug = False):
     idle_worker = cv2.cvtColor(image[749:764, 48:77], cv2.COLOR_BGR2GRAY)
-    idle_worker = prepare_for_ocr(idle_worker, 40)
+    idle_worker = prepare_for_matching(idle_worker, 40)
     if debug:
         cv2.imwrite(current_dir + "idle_workers.png", idle_worker)
-    idle_workers[0] = int(img_to_digits(idle_worker))
+    idle_workers[0] = int(img_to_digits_idle_scvs_and_army(idle_worker))
 
 def army_units_handle(image, army_units, debug = False):
     army_unit = cv2.cvtColor(image[749:763, 128:155], cv2.COLOR_BGR2GRAY)
-    army_unit = prepare_for_ocr(army_unit, 40)
+    army_unit = prepare_for_matching(army_unit, 40)
     if debug:
         cv2.imwrite(current_dir + "army_units.png", army_unit)
-    army_units[0] = int(img_to_digits(army_unit))
+    army_units[0] = int(img_to_digits_idle_scvs_and_army(army_unit))
 
 def selected_single_handle(image, selected_singles, debug = False):
     selected_single = cv2.cvtColor(image[897:915, 810:1080], cv2.COLOR_BGR2GRAY)
@@ -177,7 +211,6 @@ class screen_info:
 
 
     def __init__(self, debug = False):
-
         image = pyautogui.screenshot()
         image = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2BGR)
 
@@ -238,3 +271,4 @@ class screen_info:
             cv2.imwrite(current_dir + "building.png", self.building)
             cv2.imwrite(current_dir + "selected_group.png", self.selected_group)
             cv2.imwrite(current_dir + "game.png", self.game)
+            cv2.imwrite(current_dir + "screenshot.png", image)
