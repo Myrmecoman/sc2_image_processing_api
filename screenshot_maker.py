@@ -52,7 +52,10 @@ def img_to_digits(img, is_supply = False):
             res = cv2.matchTemplate(cropped[c], templates[i], cv2.TM_CCOEFF_NORMED)
             _, max_val, _, _ = cv2.minMaxLoc(res)
             char_result.append(max_val)
-        max_index = char_result.index(max(char_result))
+        max_value = max(char_result)
+        if max_value < 0.6:
+            continue
+        max_index = char_result.index(max_value)
         if max_index == 10:
             word += '/'
         else:
@@ -114,7 +117,10 @@ def img_to_digits_extraction(img):
             res = cv2.matchTemplate(cropped[c], templates[i], cv2.TM_CCOEFF_NORMED)
             _, max_val, _, _ = cv2.minMaxLoc(res)
             char_result.append(max_val)
-        max_index = char_result.index(max(char_result))
+        max_value = max(char_result)
+        if max_value < 0.6:
+            continue
+        max_index = char_result.index(max_value)
         if max_index == 10:
             word += '/'
         else:
@@ -246,6 +252,7 @@ def extraction_handle(image, minerals, gases):
         extraction = image[pt[1]:pt[1] + mineral_temp.shape[1] - 2, (pt[0] + 105):(pt[0] + 180), 2]
         extraction = prepare_for_matching(extraction, 130)
         extraction[:, 12] = 0
+        extraction[:, 24] = 0
         cv2.imwrite(current_dir + "mineral_extraction" + str(len(mineral_list)) + ".png", extraction)
         extraction = img_to_digits_extraction(extraction)
         slash = extraction.find('/')
