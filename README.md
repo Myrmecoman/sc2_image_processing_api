@@ -1,6 +1,8 @@
 # SC2 image processing API
 In progress starcraft 2 image processing api to extract data from live sc2 1v1 games.
 
+![Presentation](./templates/presentation.png?raw=true "Presentation")
+
 # The idea behind the project
 This api should be able to provide meaningful information in the objective to build a bot afterwards.
 It should for example be able to find mineral patches on the minimap and infer on the position of futur expansion bases, or be able to locate and count the number of barracks, factories and spatioports in order to put them in control groups.

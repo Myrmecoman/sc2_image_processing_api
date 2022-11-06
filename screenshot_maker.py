@@ -155,7 +155,7 @@ def army_units_handle(image, army_units, debug = False):
     army_units[0] = int(img_to_digits_idle_scvs_and_army(army_unit))
 
 def selected_single_handle(image, selected_singles, debug = False):
-    selected_single = cv2.cvtColor(image[897:915, 810:1080], cv2.COLOR_BGR2GRAY)
+    selected_single = cv2.cvtColor(image[895:920, 810:1080], cv2.COLOR_BGR2GRAY)
     selected_single = prepare_for_ocr(selected_single, 40)
     if debug:
         cv2.imwrite(current_dir + "selected_single.png", selected_single)
@@ -188,7 +188,7 @@ def selected_group_handle(image, selected_groups):
 
 def game_handle(image, games):
     game = copy.deepcopy(image[:823, :])
-    game[:41, 1530:] = 0
+    game[:41, 1490:] = 0
     game[783:, 1518:] = 0
     game[745:, :359] = 0
     games[0] = game
