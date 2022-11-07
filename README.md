@@ -35,75 +35,89 @@ This code was only tested with terrans so far and will require modifications if 
 
 The screenshot_maker class is the main class in charge of screenshoting and processing the image. It has many variables and is fully multithreaded. It takes about 0.3 sec to run completely, but sometimes you only need 1 information. Therefore you can disable any processing you want and only keep the one you are interested in (for example, how many minerals do i have ?).
 This class only have a constructor. You can specify debug=True to generate the segmented images and print the results of the process.
+Don't hesitate to read the code, it has comments and the class is quite small.
 
-## minimap
-
-Just the cropped minimap.
 
 ## game
 
 Cropped image of the camera view in the game.
+![a](./readme_images/game.png?raw=true "a")
+
+## minimap
+
+Just the cropped minimap.
+![a](./readme_images/minimap.png?raw=true "a")
 
 ## building
 
 Cropped image of the bottom right screen, corresponding to the building screen for workers, unit production and ability usage.
+![a](./readme_images/building.png?raw=true "a")
 
 ## selected group
 
 Cropped image of the select units icons.
+![a](./readme_images/select_group.png?raw=true "a")
 
-## supply left
+## supply left and supply right
 
-Left part of the supply info, which is your current supply.
-
-## supply right
-
-Right part of the supply info, your max supply.
+Left part of the supply info, which is your current supply, right part of the supply info, your max supply.
+![a](./readme_images/supply.png?raw=true "a")
 
 ## minerals
 
 Your bank of minerals.
+![a](./readme_images/mineral.png?raw=true "a")
 
 ## gas
 
 Your bank of gas.
+![a](./readme_images/gas.png?raw=true "a")
 
 ## idle workers
 
 Your number of idle workers.
+![a](./readme_images/idle_workers.png?raw=true "a")
 
 ## army units
 
 Your number of army units.
+![a](./readme_images/army_units.png?raw=true "a")
 
 ## selected single
 
 The name of the selected unit if you only clicked on one.
+![a](./readme_images/selected_single.png?raw=true "a")
 
 ## building authorisation
 
-Wether or not you where allowed to build when trying to.
+Wether or not you where allowed to build when trying to. This might still say False if you failed once and succeeded after since it reads the red text on the left.
+![a](./readme_images/building_autorisation.png?raw=true "a")
 
 ## mineral extraction info
 
 Provides your number of workers on the mineral patches visible on screen. Example : when the game starts you have 12/16 workers. Also provides the location to select the corresponding command center using the mouse.
+![a](./readme_images/mineral_extraction0.png?raw=true "a")
 
 ## gas extraction info
 
 Provides your number of workers on the gas refineries visible on screen. Also provides the location to select the corresponding refinery using the mouse.
+![a](./readme_images/gas_extraction0.png?raw=true "a")
 
 ## base locations
 
-Provides rough base locations on the map.
+Provides rough base locations on the map. It is a list of tuples (x, y).
 
 ## resource mask
 
 An image of the minimap with resources only.
+![a](./readme_images/resources.png?raw=true "a")
 
 ## allies mask
 
 An image of the minimap with ally positions only.
+![a](./readme_images/allies.png?raw=true "a")
 
 ## enemies mask
 
 An image of the minimap with enemy positions only. If the enemy was not scouted it will obviously empty.
+![a](./readme_images/enemies.png?raw=true "a")
