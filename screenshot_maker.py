@@ -26,7 +26,7 @@ if USE_TESSEROCR:
     #print(tesserocr.tesseract_version())  # print tesseract-ocr version
 
 
-current_dir = str(pathlib.Path(__file__).parent.absolute()) + "\\output\\screenshot_maker\\"
+current_dir = str(pathlib.Path(__file__).parent.absolute()) + "\\output\\"
 
 
 def img_to_digits(img, is_supply = False):
@@ -304,48 +304,60 @@ class screen_info:
     enemies_mask = []                   # minimap enemies
 
 
-    def __init__(self, debug = False):
+    def __init__(self,
+    debug = False,
+    get_supply = True,
+    get_mineral = True,
+    get_gas = True,
+    get_idle_workers = True,
+    get_army_units = True,
+    get_selected_single = True,
+    get_minimap = True,
+    get_building = True,
+    get_selected_group = True,
+    get_game_image = True,
+    get_extraction_rate = True,
+    get_mineral_locations = False): # should only be called once at game startup
 
         image = []
         with mss.mss() as mss_instance:
             monitor = mss_instance.monitors[1]
             image = cv2.cvtColor(np.array(mss_instance.grab(monitor)), cv2.COLOR_BGRA2BGR)
 
-        supply_thread = Thread(target=supply_handle, args=(image, self.supply_left, self.supply_right, debug))
-        mineral_thread = Thread(target=mineral_handle, args=(image, self.minerals, debug))
-        gas_thread = Thread(target=gas_handle, args=(image, self.gas, debug))
-        idle_workers_thread = Thread(target=idle_workers_handle, args=(image, self.idle_workers, debug))
-        army_units_thread = Thread(target=army_units_handle, args=(image, self.army_units, debug))
-        selected_single_thread = Thread(target=selected_single_handle, args=(image, self.selected_single, debug))
-        minimap_thread = Thread(target=minimap_handle, args=(image, self.minimap))
-        building_thread = Thread(target=building_handle, args=(image, self.building))
-        selected_group_thread = Thread(target=selected_group_handle, args=(image, self.selected_group))
-        game_thread = Thread(target=game_handle, args=(image, self.game))
-        extraction_thread = Thread(target=extraction_handle, args=(image, self.mineral_extraction_infos, self.gas_extraction_infos))
-
-        supply_thread.start()
-        mineral_thread.start()
-        gas_thread.start()
-        idle_workers_thread.start()
-        army_units_thread.start()
-        selected_single_thread.start()
-        minimap_thread.start()
-        building_thread.start()
-        selected_group_thread.start()
-        game_thread.start()
-        extraction_thread.start()
-
-        supply_thread.join()
-        mineral_thread.join()
-        gas_thread.join()
-        idle_workers_thread.join()
-        army_units_thread.join()
-        selected_single_thread.join()
-        minimap_thread.join()
-        building_thread.join()
-        selected_group_thread.join()
-        game_thread.join()
-        extraction_thread.join()
+        # declaring threads
+        threads = [None, None, None, None, None, None, None, None, None, None, None]
+        if get_supply:
+            threads[0] = Thread(target=supply_handle, args=(image, self.supply_left, self.supply_right, debug))
+        if get_mineral:
+            threads[1] = Thread(target=mineral_handle, args=(image, self.minerals, debug))
+        if get_gas:
+            threads[2] = Thread(target=gas_handle, args=(image, self.gas, debug))
+        if get_idle_workers:
+            threads[3] = Thread(target=idle_workers_handle, args=(image, self.idle_workers, debug))
+        if get_army_units:
+            threads[4] = Thread(target=army_units_handle, args=(image, self.army_units, debug))
+        if get_selected_single:
+            threads[5] = Thread(target=selected_single_handle, args=(image, self.selected_single, debug))
+        if get_minimap:
+            threads[6] = Thread(target=minimap_handle, args=(image, self.minimap))
+        if get_building:
+            threads[7] = Thread(target=building_handle, args=(image, self.building))
+        if get_selected_group:
+            threads[8] = Thread(target=selected_group_handle, args=(image, self.selected_group))
+        if get_game_image:
+            threads[9] = Thread(target=game_handle, args=(image, self.game))
+        if get_extraction_rate:
+            threads[10] = Thread(target=extraction_handle, args=(image, self.mineral_extraction_infos, self.gas_extraction_infos))
+        
+        # running threads
+        for i in threads:
+            if i is not None:
+                i.start()
+        
+        # joining threads
+        for i in threads:
+            if i is not None:
+                i.join()
 
         self.minimap = self.minimap[0]
         self.game = self.game[0]
@@ -361,30 +373,38 @@ class screen_info:
         self.mineral_extraction_infos = self.mineral_extraction_infos[0]
         self.gas_extraction_infos = self.gas_extraction_infos[0]
 
-        # getting resources
-        color = np.array([241, 191, 126])
-        self.resources_mask = cv2.inRange(self.minimap, color, color)
-        
-        # getting allies
-        left = np.array([0, 140, 0])
-        right = np.array([0, 255, 0])
-        self.allies_mask = cv2.inRange(self.minimap, left, right)
+        if get_minimap:
+            # getting resources
+            color = np.array([241, 191, 126])
+            self.resources_mask = cv2.inRange(self.minimap, color, color)
+            # getting allies
+            left = np.array([0, 140, 0])
+            right = np.array([0, 255, 0])
+            self.allies_mask = cv2.inRange(self.minimap, left, right)
+            # getting enemies
+            left = np.array([0, 0, 190])
+            right = np.array([0, 0, 255])
+            self.enemies_mask = cv2.inRange(self.minimap, left, right)
 
-        # getting enemies
-        left = np.array([0, 0, 190])
-        right = np.array([0, 0, 255])
-        self.enemies_mask = cv2.inRange(self.minimap, left, right)
-
-        # finding approximate base locations
-        kernel = np.ones((7, 7), np.uint8)
-        locations = copy.deepcopy(self.resources_mask)
-        locations = cv2.dilate(locations, kernel)
-        num_labels, labels_ids, values, centroids = cv2.connectedComponentsWithStats(locations, 4)
-        for i in range(1, num_labels):
-            if values[i][-1] < 200 : # components with small areas are very probably small minerals patches blocking passages
-                continue
-            self.base_locations.append([int(centroids[i][0]), int(centroids[i][1])])
-            locations[int(centroids[i][1])][int(centroids[i][0])] = 100
+            # finding approximate base locations
+            if get_mineral_locations:
+                kernel = np.ones((7, 7), np.uint8)
+                locations = copy.deepcopy(self.resources_mask)
+                locations = cv2.dilate(locations, kernel)
+                num_labels, labels_ids, values, centroids = cv2.connectedComponentsWithStats(locations, 4)
+                for i in range(1, num_labels):
+                    if values[i][-1] < 200 : # components with small areas are very probably small minerals patches blocking passages
+                        continue
+                    self.base_locations.append([int(centroids[i][0]), int(centroids[i][1])])
+                    locations[int(centroids[i][1])][int(centroids[i][0])] = 100
+                
+                if debug:
+                    cv2.imwrite(current_dir + "locations.png", locations)
+            
+            if debug:
+                cv2.imwrite(current_dir + "ressources.png", self.resources_mask)
+                cv2.imwrite(current_dir + "allies.png", self.allies_mask)
+                cv2.imwrite(current_dir + "enemies.png", self.enemies_mask)
 
         if debug:
             print("supply =                   " + str(self.supply_left) + "/" + str(self.supply_right))
@@ -396,10 +416,6 @@ class screen_info:
             print("mineral_extraction_infos = " + str(self.mineral_extraction_infos))
             print("gas_extraction_infos =     " + str(self.gas_extraction_infos))
             
-            cv2.imwrite(current_dir + "ressources.png", self.resources_mask)
-            cv2.imwrite(current_dir + "allies.png", self.allies_mask)
-            cv2.imwrite(current_dir + "enemies.png", self.enemies_mask)
-            cv2.imwrite(current_dir + "locations.png", locations)
             cv2.imwrite(current_dir + "minimap.png", self.minimap)
             cv2.imwrite(current_dir + "building.png", self.building)
             cv2.imwrite(current_dir + "selected_group.png", self.selected_group)
