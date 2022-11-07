@@ -4,7 +4,7 @@ In progress starcraft 2 image processing api to extract data from live sc2 1v1 g
 ![Presentation](./readme_images/presentation.png?raw=true "Presentation")
 
 # The idea behind the project
-This api should be able to provide meaningful information in the objective to build a bot afterwards.
+This api should be able to provide meaningful information in the objective of building a bot afterwards.
 It should for example be able to find mineral patches on the minimap and infer on the position of futur expansion bases, or be able to locate and count the number of barracks, factories and spatioports in order to put them in control groups.
 
 # Why python
@@ -134,6 +134,6 @@ An image of the minimap with ally positions only.
 
 ## enemies mask
 
-An image of the minimap with enemy positions only. If the enemy was not scouted it will obviously empty.
+An image of the minimap with enemy positions only. If the enemy was not scouted it will obviously be empty.
 
 ![a](./readme_images/enemies.png?raw=true "a")
