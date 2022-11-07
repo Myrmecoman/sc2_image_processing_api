@@ -207,11 +207,11 @@ def selected_single_handle(image, selected_singles, debug = False):
     
     output = img_to_letters(selected_single)
     min_dist = (100, '')
-    for key in units_dictionaries.building_prices:
+    for key in units_dictionaries.buildings:
         distance = lev(output, key)
         if distance < min_dist[0]:
             min_dist = (distance, key)
-    for key in units_dictionaries.unit_prices_supply:
+    for key in units_dictionaries.units:
         distance = lev(output, key)
         if distance < min_dist[0]:
             min_dist = (distance, key)
