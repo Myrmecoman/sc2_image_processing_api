@@ -3,3 +3,5 @@ pytesseract
 cv2
 PIL
 python-Levenshtein
+opencv-python
+numpy

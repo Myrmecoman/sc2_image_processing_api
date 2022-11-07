@@ -1,1 +1,3 @@
-?
+Get rid of OCRs and use pattern matching
+Make detector to know if building is autorised to build at position
+Pyautogui is slow, try to find something quicker

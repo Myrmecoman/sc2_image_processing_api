@@ -296,6 +296,10 @@ class screen_info:
     selected_single = [None]*1          # string
     mineral_extraction_infos = [None]*1 # list of ((int, int), (int, int)) corresponding to (( nb_workers/workers_max ), ( position_x, position_y )) where position is click position to select the command center
     gas_extraction_infos = [None]*1     # list of ((int, int), (int, int)) corresponding to (( nb_workers/workers_max ), ( position_x, position_y )) where position is click position to select the refinery
+    base_locations = []                 # list of base locations on minimap
+    resources_mask = []                 # minimap resources
+    allies_mask = []                    # minimap allies
+    enemies_mask = []                   # minimap enemies
 
 
     def __init__(self, debug = False):
@@ -352,6 +356,31 @@ class screen_info:
         self.mineral_extraction_infos = self.mineral_extraction_infos[0]
         self.gas_extraction_infos = self.gas_extraction_infos[0]
 
+        # getting resources
+        color = np.array([241, 191, 126])
+        self.resources_mask = cv2.inRange(self.minimap, color, color)
+        
+        # getting allies
+        left = np.array([0, 140, 0])
+        right = np.array([0, 255, 0])
+        self.allies_mask = cv2.inRange(self.minimap, left, right)
+
+        # getting enemies
+        left = np.array([0, 0, 190])
+        right = np.array([0, 0, 255])
+        self.enemies_mask = cv2.inRange(self.minimap, left, right)
+
+        # finding approximate base locations
+        kernel = np.ones((7, 7), np.uint8)
+        locations = copy.deepcopy(self.resources_mask)
+        locations = cv2.dilate(locations, kernel)
+        num_labels, labels_ids, values, centroids = cv2.connectedComponentsWithStats(locations, 4)
+        for i in range(1, num_labels):
+            if values[i][-1] < 200 : # components with small areas are very probably small minerals patches blocking passages
+                continue
+            self.base_locations.append([int(centroids[i][0]), int(centroids[i][1])])
+            locations[int(centroids[i][1])][int(centroids[i][0])] = 100
+
         if debug:
             print("supply =                   " + str(self.supply_left) + "/" + str(self.supply_right))
             print("mineral =                  " + str(self.minerals))
@@ -362,6 +391,10 @@ class screen_info:
             print("mineral_extraction_infos = " + str(self.mineral_extraction_infos))
             print("gas_extraction_infos =     " + str(self.gas_extraction_infos))
             
+            cv2.imwrite(current_dir + "ressources.png", self.resources_mask)
+            cv2.imwrite(current_dir + "allies.png", self.allies_mask)
+            cv2.imwrite(current_dir + "enemies.png", self.enemies_mask)
+            cv2.imwrite(current_dir + "locations.png", locations)
             cv2.imwrite(current_dir + "minimap.png", self.minimap)
             cv2.imwrite(current_dir + "building.png", self.building)
             cv2.imwrite(current_dir + "selected_group.png", self.selected_group)
