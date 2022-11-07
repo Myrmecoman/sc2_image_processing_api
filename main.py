@@ -7,7 +7,7 @@ import pyautogui
 time.sleep(4)
 
 start_time = time.time()
-screen_infos = screenshot_maker.screen_info(True, get_mineral_locations=True)
+screen_infos = screenshot_maker.screen_info(True, get_mineral_locations=True, get_building_autorisation=True)
 print("%s sec" % (time.time() - start_time))
 
 '''

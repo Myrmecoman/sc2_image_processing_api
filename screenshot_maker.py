@@ -219,8 +219,31 @@ def selected_single_handle(image, selected_singles, debug = False):
         output = min_dist[1]
     else:
         output = ''
-
     selected_singles[0] = output
+
+def building_autorisation_handle(image, building_auth, debug = False):
+    build_img = image[615:640, 3:80, 2]
+    build_img = prepare_for_matching(build_img, 230)
+    if debug:
+        cv2.imwrite(current_dir + "building_autorisation.png", build_img)
+
+    # loading templates
+    templates = []
+    templates.append(cv2.imread(str(pathlib.Path(__file__).parent.absolute()) + "\\templates\\building_authorisation\\cant.png", cv2.IMREAD_GRAYSCALE))
+    templates.append(cv2.imread(str(pathlib.Path(__file__).parent.absolute()) + "\\templates\\building_authorisation\\geys.png", cv2.IMREAD_GRAYSCALE))
+
+    # matching each character with each template and keeping best match
+    matches = []
+    for i in range(len(templates)):
+        res = cv2.matchTemplate(build_img, templates[i], cv2.TM_CCOEFF_NORMED)
+        _, max_val, _, _ = cv2.minMaxLoc(res)
+        matches.append(max_val)
+    max_value = max(matches)
+    
+    if max_value >= 0.8:
+        building_auth[0] = False
+    else:
+        building_auth[0] = True
 
 def minimap_handle(image, minimaps):
     minimaps[0] = image[808:1065, 25:291]
@@ -261,7 +284,11 @@ def extraction_handle(image, minerals, gases):
         if slash == -1:
             print("ERROR: no / found")
         else:
-            mineral_list.append(((int(extraction[:slash]), int(extraction[slash + 1:])), (pt[0] + mineral_temp.shape[0] - 1, pt[1] + mineral_temp.shape[1] - 1)))
+            left = int(extraction[:slash])
+            right = int(extraction[slash + 1:])
+            if right > 16: # the program often get mistaken between 6 and 8 (tells 12/18 instead of 12/16), this acts as a patch for now since mineral patches can handle 16 workers max
+                right = 16
+            mineral_list.append(((left, right), (pt[0] + mineral_temp.shape[0] - 1, pt[1] + mineral_temp.shape[1] - 1)))
 
     gas_list = []
     for pt in zip(*loc_gas[::-1]):
@@ -296,6 +323,7 @@ class screen_info:
     idle_workers = [None]*1             # int
     army_units = [None]*1               # int
     selected_single = [None]*1          # string
+    building_autorisation = [None]*1    # bool
     mineral_extraction_infos = [None]*1 # list of ((int, int), (int, int)) corresponding to (( nb_workers/workers_max ), ( position_x, position_y )) where position is click position to select the command center
     gas_extraction_infos = [None]*1     # list of ((int, int), (int, int)) corresponding to (( nb_workers/workers_max ), ( position_x, position_y )) where position is click position to select the refinery
     base_locations = []                 # list of base locations on minimap
@@ -317,7 +345,8 @@ class screen_info:
     get_selected_group = True,
     get_game_image = True,
     get_extraction_rate = True,
-    get_mineral_locations = False): # should only be called once at game startup
+    get_mineral_locations = False,      # should only be called once at game startup
+    get_building_autorisation = False):
 
         image = []
         with mss.mss() as mss_instance:
@@ -325,7 +354,7 @@ class screen_info:
             image = cv2.cvtColor(np.array(mss_instance.grab(monitor)), cv2.COLOR_BGRA2BGR)
 
         # declaring threads
-        threads = [None, None, None, None, None, None, None, None, None, None, None]
+        threads = [None, None, None, None, None, None, None, None, None, None, None, None]
         if get_supply:
             threads[0] = Thread(target=supply_handle, args=(image, self.supply_left, self.supply_right, debug))
         if get_mineral:
@@ -338,16 +367,18 @@ class screen_info:
             threads[4] = Thread(target=army_units_handle, args=(image, self.army_units, debug))
         if get_selected_single:
             threads[5] = Thread(target=selected_single_handle, args=(image, self.selected_single, debug))
+        if get_building_autorisation:
+            threads[6] = Thread(target=building_autorisation_handle, args=(image, self.building_autorisation, debug))
         if get_minimap:
-            threads[6] = Thread(target=minimap_handle, args=(image, self.minimap))
+            threads[7] = Thread(target=minimap_handle, args=(image, self.minimap))
         if get_building:
-            threads[7] = Thread(target=building_handle, args=(image, self.building))
+            threads[8] = Thread(target=building_handle, args=(image, self.building))
         if get_selected_group:
-            threads[8] = Thread(target=selected_group_handle, args=(image, self.selected_group))
+            threads[9] = Thread(target=selected_group_handle, args=(image, self.selected_group))
         if get_game_image:
-            threads[9] = Thread(target=game_handle, args=(image, self.game))
+            threads[10] = Thread(target=game_handle, args=(image, self.game))
         if get_extraction_rate:
-            threads[10] = Thread(target=extraction_handle, args=(image, self.mineral_extraction_infos, self.gas_extraction_infos))
+            threads[11] = Thread(target=extraction_handle, args=(image, self.mineral_extraction_infos, self.gas_extraction_infos))
         
         # running threads
         for i in threads:
@@ -370,6 +401,7 @@ class screen_info:
         self.idle_workers = self.idle_workers[0]
         self.army_units = self.army_units[0]
         self.selected_single = self.selected_single[0]
+        self.building_autorisation = self.building_autorisation[0]
         self.mineral_extraction_infos = self.mineral_extraction_infos[0]
         self.gas_extraction_infos = self.gas_extraction_infos[0]
 
@@ -402,22 +434,34 @@ class screen_info:
                     cv2.imwrite(current_dir + "locations.png", locations)
             
             if debug:
+                cv2.imwrite(current_dir + "minimap.png", self.minimap)
                 cv2.imwrite(current_dir + "ressources.png", self.resources_mask)
                 cv2.imwrite(current_dir + "allies.png", self.allies_mask)
                 cv2.imwrite(current_dir + "enemies.png", self.enemies_mask)
 
         if debug:
-            print("supply =                   " + str(self.supply_left) + "/" + str(self.supply_right))
-            print("mineral =                  " + str(self.minerals))
-            print("gas =                      " + str(self.gas))
-            print("idle_workers =             " + str(self.idle_workers))
-            print("army_units =               " + str(self.army_units))
-            print("selected_single =          " + str(self.selected_single))
-            print("mineral_extraction_infos = " + str(self.mineral_extraction_infos))
-            print("gas_extraction_infos =     " + str(self.gas_extraction_infos))
-            
-            cv2.imwrite(current_dir + "minimap.png", self.minimap)
-            cv2.imwrite(current_dir + "building.png", self.building)
-            cv2.imwrite(current_dir + "selected_group.png", self.selected_group)
-            cv2.imwrite(current_dir + "game.png", self.game)
+            if get_supply:
+                print("supply =                   " + str(self.supply_left) + "/" + str(self.supply_right))
+            if get_mineral:
+                print("mineral =                  " + str(self.minerals))
+            if get_gas:
+                print("gas =                      " + str(self.gas))
+            if get_idle_workers:
+                print("idle_workers =             " + str(self.idle_workers))
+            if get_army_units:
+                print("army_units =               " + str(self.army_units))
+            if get_selected_single:
+                print("selected_single =          " + str(self.selected_single))
+            if get_extraction_rate:
+                print("mineral_extraction_infos = " + str(self.mineral_extraction_infos))
+                print("gas_extraction_infos =     " + str(self.gas_extraction_infos))
+            if get_building_autorisation:
+                print("building_autorisation =    " + str(self.building_autorisation))
+
+            if get_building:
+                cv2.imwrite(current_dir + "building.png", self.building)
+            if get_selected_group:
+                cv2.imwrite(current_dir + "selected_group.png", self.selected_group)
+            if get_game_image:
+                cv2.imwrite(current_dir + "game.png", self.game)
             cv2.imwrite(current_dir + "screenshot.png", image)
