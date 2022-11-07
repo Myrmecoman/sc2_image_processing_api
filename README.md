@@ -7,6 +7,8 @@ In progress starcraft 2 image processing api to extract data from live sc2 1v1 g
 This api should be able to provide meaningful information in the objective of building a bot afterwards.
 It should for example be able to find mineral patches on the minimap and infer on the position of futur expansion bases, or be able to locate and count the number of barracks, factories and spatioports in order to put them in control groups.
 
+WARNING : some infos can be wrong or absent during the segmentation ! You have to make your own checks when using the code since the class can fail to get some infos.
+
 # Why python
 Python is used for now even though we might need speed to do operations frequently because we might want to use tensorflow to build a learning model afterwards.
 Building bindings from C++ to python for the most intensive functions will need to be evaluated.
