@@ -1,2 +1,1 @@
 Get rid of OCRs and use pattern matching ? (could be slower)
-Make detector to know if building is autorised to build at position
