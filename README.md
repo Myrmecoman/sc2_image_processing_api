@@ -98,12 +98,6 @@ The name of the selected unit if you only clicked on one.
 
 ![a](./readme_images/selected_single.png?raw=true "a")
 
-## building authorisation
-
-Wether or not you where allowed to build when trying to. This might still say False if you failed once and succeeded after since it reads the red text on the left.
-
-![a](./readme_images/building_autorisation.png?raw=true "a")
-
 ## mineral extraction info
 
 Provides your number of workers on the mineral patches visible on screen. Example : when the game starts you have 12/16 workers. Also provides the location to select the corresponding command center using the mouse.
