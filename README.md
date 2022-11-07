@@ -1,5 +1,5 @@
 # SC2 image processing API
-In progress starcraft 2 image processing api to extract data from live sc2 1v1 games.
+In progress starcraft 2 image processing api to extract data from live sc2 1v1 games as terran.
 
 ![Presentation](./templates/presentation.png?raw=true "Presentation")
 
@@ -12,11 +12,6 @@ Python is used for now even though we might need speed to do operations frequent
 Building bindings from C++ to python for the most intensive functions will need to be evaluated.
 The objective is 0.5 sec for the whole image segmentation process, in order to leave 1 or 2 sec for the futur bot to perform actions.
 
-# Usage prerequisites
-This code expects to screenshot a usual 1v1 game against a human or an AI. The minimap colors must be set on green for you and red for the enemy.
-This is currently being made for sc2 on a 1920x1080 screen. This is required since the program uses screenshots. I noticed that playing against no one in a custom match changes the minerals / gas / supply info position on the top right hand corner, which breaks the program. This could be supported later.
-This code was only tested with terrans so far but should work with the other races.
-
 # About the OCR (optical character recognition)
 Tesserocr is reputed faster and usually more precise than pytesseract, however it is more complicated to install.
 
@@ -28,3 +23,10 @@ Tesserocr is reputed faster and usually more precise than pytesseract, however i
 - units_dictionaries : dictionaries providing useful info corresponding to different units and buildings.
 - screenshot_maker : makes a screenshot of the game and extracts usefull info such as supply, mineral, gas etc.. Also extracts cropped parts of the game (minimap, central window, right window etc...).
 - main : can be used to write testing code to familiarize with the API.
+
+# Usage prerequisites
+This code expects to screenshot a usual 1v1 game against a human or an AI. The minimap colors must be set on Default for you and Default for the enemy (see image below).
+This is currently being made for sc2 on a 1920x1080 screen. This is required since the program uses screenshots. I noticed that playing against no one in a custom match changes the minerals / gas / supply info position on the top right hand corner, which breaks the program. This could be supported later.
+This code was only tested with terrans so far and will require modifications if you want to use other races since for example the gas icon is different for zergs and will not be detected by this code.
+
+![Recommendations](./templates/recommended_colors_and_graphics.png?raw=true "Recommendations")
