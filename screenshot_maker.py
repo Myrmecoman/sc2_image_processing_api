@@ -10,6 +10,8 @@ from PIL import Image
 from Levenshtein import distance as lev
 import units_dictionaries
 import random
+import time
+import mss
 
 
 # This file extracts the data from a screenshot.
@@ -303,8 +305,11 @@ class screen_info:
 
 
     def __init__(self, debug = False):
-        image = pyautogui.screenshot()
-        image = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2BGR)
+
+        image = []
+        with mss.mss() as mss_instance:
+            monitor = mss_instance.monitors[1]
+            image = cv2.cvtColor(np.array(mss_instance.grab(monitor)), cv2.COLOR_BGRA2BGR)
 
         supply_thread = Thread(target=supply_handle, args=(image, self.supply_left, self.supply_right, debug))
         mineral_thread = Thread(target=mineral_handle, args=(image, self.minerals, debug))

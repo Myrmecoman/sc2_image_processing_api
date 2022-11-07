@@ -13,7 +13,7 @@ print("%s sec" % (time.time() - start_time))
 '''
 start_time = time.time()
 for i in screen_infos.base_locations:
-    pyautogui.moveTo(25 + i[0], 808 + i[1])
+    pyautogui.moveTo(25 + i[0], 808 + i[1], duration=0.0, _pause=False)
     pyautogui.click()
 print("%s sec" % (time.time() - start_time))
 '''
