@@ -25,6 +25,7 @@ Tesserocr is reputed faster and usually more precise than pytesseract, however i
 - units_dictionaries : dictionaries providing useful info corresponding to different units and buildings.
 - screenshot_maker : makes a screenshot of the game and extracts usefull info such as supply, mineral, gas etc.. Also extracts cropped parts of the game (minimap, central window, right window etc...).
 - main : can be used to write testing code to familiarize with the API.
+- 4raks_example_bot : a simple bot making a 4 barracks all in using this API. The code is 300 lines long and it is not smart at all but this demonstrates that boting using graphics only is possible ! Be careful this code might not work if you have different keybinds, espacialy for the A move since I have a french keyboard and use T move instead.
 
 # Usage prerequisites
 This code expects to screenshot a usual 1v1 game against a human or an AI. The minimap colors must be set on Default for you and Default for the enemy (see image below).
