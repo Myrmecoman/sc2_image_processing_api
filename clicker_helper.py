@@ -1,8 +1,10 @@
-import numpy as np
-
-
 # provides clicking locations
 class clicker_helper:
+
+    idle_workers = (40, 780)
+    army = (115, 780)
+
+    control_groups = [(560, 843), (627, 843), (695, 843), (765, 843), (830, 843), (900, 843), (970, 843), (1035, 843), (1105, 843), (1175, 843)]
 
     right_window = [ # if you want to click instead of using hotkeys
         [(1575, 880), (1640, 880), (1713, 880), (1780, 880), (1853, 880)],

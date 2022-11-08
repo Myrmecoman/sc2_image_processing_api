@@ -1,1 +1,6 @@
-Feel free to provide ideas on github.
+Feel free to provide ideas / help on github !
+
+Make the screenshot_maker class safer from segmentation errors.
+Provide info if building is available.
+Detect mineral patches to be able to tell workers to go back to mining.
+Detect buildable terrain (certainly only feasible using CNNs).

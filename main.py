@@ -7,7 +7,7 @@ import pyautogui
 time.sleep(4)
 
 start_time = time.time()
-infos = screen_info(debug=True, minimap_init_values=True)
+infos = screen_info(debug=True, minimap_init_values=False)
 print("%s sec" % (time.time() - start_time))
 
 '''

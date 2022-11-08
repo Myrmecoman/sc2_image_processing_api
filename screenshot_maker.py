@@ -1,16 +1,12 @@
-import pyautogui
 import cv2
 import numpy as np
 import pathlib
 import copy
 import pytesseract
-import re
 from threading import Thread
 from PIL import Image
 from Levenshtein import distance as lev
 import units_dictionaries
-import random
-import time
 import mss
 
 
