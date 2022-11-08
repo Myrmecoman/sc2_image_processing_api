@@ -305,6 +305,7 @@ class screen_info:
     resources_mask = []                 # minimap resources
     allies_mask = []                    # minimap allies
     enemies_mask = []                   # minimap enemies
+    enemy_starting_base = []            # enemy starting base position on the minimap, a tuple (int, int)
 
 
     def __init__(self,
@@ -320,7 +321,7 @@ class screen_info:
     get_selected_group = True,
     get_game_image = True,
     get_extraction_rate = True,
-    get_mineral_locations = False): # should only be called once at game startup
+    minimap_init_values = False): # should only be called once at game startup, this detects mineral patches and the enemy base position
 
         image = []
         with mss.mss() as mss_instance:
@@ -389,8 +390,9 @@ class screen_info:
             right = np.array([0, 0, 255])
             self.enemies_mask = cv2.inRange(self.minimap, left, right)
 
-            # finding approximate base locations
-            if get_mineral_locations:
+            # finding approximate base locations and enemy base starting position
+            if minimap_init_values:
+                # base locations
                 kernel = np.ones((7, 7), np.uint8)
                 locations = copy.deepcopy(self.resources_mask)
                 locations = cv2.dilate(locations, kernel)
@@ -401,8 +403,18 @@ class screen_info:
                     self.base_locations.append([int(centroids[i][0]), int(centroids[i][1])])
                     locations[int(centroids[i][1])][int(centroids[i][0])] = 100
                 
+                # enemy base starting position
+                left = np.array([0, 0, 230])
+                right = np.array([5, 5, 255])
+                red_minimap = cv2.inRange(self.minimap, left, right)
+                kernel = np.ones((9, 9), np.uint8)
+                red_minimap = cv2.dilate(red_minimap, kernel)
+                _, _, _, centroids = cv2.connectedComponentsWithStats(red_minimap, 4, cv2.CV_32S)
+                self.enemy_starting_base = (int(centroids[1][0]), int(centroids[1][1]))
+                
                 if debug:
                     cv2.imwrite(current_dir + "locations.png", locations)
+                    cv2.imwrite(current_dir + "enemy_location.png", red_minimap)
             
             if debug:
                 cv2.imwrite(current_dir + "minimap.png", self.minimap)
@@ -426,6 +438,9 @@ class screen_info:
             if get_extraction_rate:
                 print("mineral_extraction_infos = " + str(self.mineral_extraction_infos))
                 print("gas_extraction_infos =     " + str(self.gas_extraction_infos))
+            if minimap_init_values:
+                print("enemy base position =      " + str(self.enemy_starting_base))
+
 
             if get_building:
                 cv2.imwrite(current_dir + "building.png", self.building)

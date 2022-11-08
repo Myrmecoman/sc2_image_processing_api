@@ -133,3 +133,9 @@ An image of the minimap with ally positions only.
 An image of the minimap with enemy positions only. If the enemy was not scouted it will obviously be empty.
 
 ![a](./readme_images/enemies.png?raw=true "a")
+
+## enemy starting base
+
+The enemy starting base position on the minimap. It is a tuple of int.
+
+![a](./readme_images/enemy_location.png?raw=true "a")
