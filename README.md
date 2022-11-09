@@ -24,8 +24,9 @@ Tesserocr is reputed faster and usually more precise than pytesseract, however i
 - clicker_helper : provides location to click on the middle or right window of the game.
 - units_dictionaries : dictionaries providing useful info corresponding to different units and buildings.
 - UI_processor : makes a screenshot of the game and extracts usefull info from UI such as supply, mineral, gas etc.. Also extracts cropped parts of the game (minimap, central window, right window etc...).
+- camera_view_processor : uses the game windows captured by the UI_processor, or screenshots it by itself, in order to find element in the camera view window. It can find mineral patches for example, in order to order workers to go back to mining. /!\ Work In Progress
 - main : can be used to write testing code to familiarize with the API.
-- 4raks_example_bot : a simple bot making a 4 barracks all in using this API. The code is 300 lines long and it is not smart at all but this demonstrates that boting using graphics only is possible ! Be careful this code might not work if you have different keybinds, espacialy for the A move since I have a french keyboard and use T move instead.
+- 4raks_example_bot : a simple bot making a 4 barracks all in using this API. The code is 250 lines long and it is not smart at all but this demonstrates that boting using graphics only is possible ! Be careful this code might not work if you have different keybinds, espacialy for the A move since I have a french keyboard and use T move instead.
 
 # Usage prerequisites
 This code expects to screenshot a usual 1v1 game against a human or an AI. The minimap colors must be set on Default for you and Default for the enemy (see image below).
@@ -36,9 +37,9 @@ This code was only tested with terrans so far and will require modifications if 
 
 # In depth explanation of the UI_processor class
 
-The UI_processor class is the main class in charge of screenshoting and processing the image. It has many variables and is fully multithreaded. It takes about 0.3 sec to run completely, but sometimes you only need 1 information. Therefore you can disable any processing you want and only keep the one you are interested in (for example, how many minerals do i have ?).
+The UI_processor class is the main class in charge of screenshoting and processing the interface. It has many variables and is fully multithreaded. It takes about 0.3 sec to run completely, but sometimes you only need 1 information. Therefore you can disable any processing you want and only keep the one you are interested in (for example, how many minerals do i have ?).
 This class only have a constructor. You can specify debug=True to generate the segmented images and print the results of the process.
-Don't hesitate to read the code, it has comments and the class is quite small.
+Don't hesitate to read the code, it has comments and the class is quite a short read.
 
 
 ### game
@@ -67,55 +68,55 @@ Cropped image of the select units icons.
 
 ### supply left and supply right
 
-Left part of the supply info, which is your current supply, right part of the supply info, your max supply.
+Left part of the supply info, which is your current supply, right part of the supply info, your max supply. Both are int.
 
 ![a](./readme_images/supply.png?raw=true "a")
 
 ### minerals
 
-Your bank of minerals.
+Your bank of minerals. It is an int.
 
 ![a](./readme_images/mineral.png?raw=true "a")
 
 ### gas
 
-Your bank of gas.
+Your bank of gas. It is an int.
 
 ![a](./readme_images/gas.png?raw=true "a")
 
 ### idle workers
 
-Your number of idle workers.
+Your number of idle workers. It is an int.
 
 ![a](./readme_images/idle_workers.png?raw=true "a")
 
 ### army units
 
-Your number of army units.
+Your number of army units. It is an int.
 
 ![a](./readme_images/army_units.png?raw=true "a")
 
 ### selected single
 
-The name of the selected unit if you only clicked on one.
+The name of the selected unit if you only clicked on one. It is a string.
 
 ![a](./readme_images/selected_single.png?raw=true "a")
 
 ### mineral extraction info
 
-Provides your number of workers on the mineral patches visible on screen. Example : when the game starts you have 12/16 workers. Also provides the location to select the corresponding command center using the mouse.
+Provides your number of workers on the mineral patches visible on screen. Example : when the game starts you have 12/16 workers. Also provides the location to select the corresponding command center using the mouse. It is a list of ((int, int), (int, int)) corresponding to (( nb_workers/workers_max ), ( position_x, position_y )).
 
 ![a](./readme_images/mineral_extraction0.png?raw=true "a")
 
 ### gas extraction info
 
-Provides your number of workers on the gas refineries visible on screen. Also provides the location to select the corresponding refinery using the mouse.
+Provides your number of workers on the gas refineries visible on screen. Also provides the location to select the corresponding refinery using the mouse. It is a list of ((int, int), (int, int)) corresponding to (( nb_workers/workers_max ), ( position_x, position_y )).
 
 ![a](./readme_images/gas_extraction0.png?raw=true "a")
 
 ### base locations
 
-Provides rough base locations on the map. It is a list of tuples (x, y).
+Provides rough base locations on the map. It is a list of tuples (int, int).
 
 ### resource mask
 
@@ -146,3 +147,11 @@ The enemy starting base position on the minimap. It is a tuple of int.
 Our starting base position on the minimap. It is a tuple of int.
 
 ![a](./readme_images/our_location.png?raw=true "a")
+
+# In depth explanation of the cam_processor class
+
+This class should be able to extract any information from the game window that is basically doable without a convolutional neural network. I can do color based detection to find mineral patches for example.
+
+### mineral_patches
+
+Provides screen positions of mineral matches. It is a list of tuples of type (int, int).

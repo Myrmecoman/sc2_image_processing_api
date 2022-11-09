@@ -22,7 +22,7 @@ if USE_TESSEROCR:
     #print(tesserocr.tesseract_version())  # print tesseract-ocr version
 
 
-current_dir = str(pathlib.Path(__file__).parent.absolute()) + "\\output\\"
+current_dir = str(pathlib.Path(__file__).parent.absolute()) + "\\UI_processor_debug\\"
 
 
 def img_to_digits(img, is_supply = False):
