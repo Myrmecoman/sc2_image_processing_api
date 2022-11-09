@@ -41,102 +41,108 @@ This class only have a constructor. You can specify debug=True to generate the s
 Don't hesitate to read the code, it has comments and the class is quite small.
 
 
-## game
+### game
 
 Cropped image of the camera view in the game.
 
 ![a](./readme_images/game.png?raw=true "a")
 
-## minimap
+### minimap
 
 Just the cropped minimap.
 
 ![a](./readme_images/minimap.png?raw=true "a")
 
-## building
+### building
 
 Cropped image of the bottom right screen, corresponding to the building screen for workers, unit production and ability usage.
 
 ![a](./readme_images/building.png?raw=true "a")
 
-## selected group
+### selected group
 
 Cropped image of the select units icons.
 
 ![a](./readme_images/selected_group.png?raw=true "a")
 
-## supply left and supply right
+### supply left and supply right
 
 Left part of the supply info, which is your current supply, right part of the supply info, your max supply.
 
 ![a](./readme_images/supply.png?raw=true "a")
 
-## minerals
+### minerals
 
 Your bank of minerals.
 
 ![a](./readme_images/mineral.png?raw=true "a")
 
-## gas
+### gas
 
 Your bank of gas.
 
 ![a](./readme_images/gas.png?raw=true "a")
 
-## idle workers
+### idle workers
 
 Your number of idle workers.
 
 ![a](./readme_images/idle_workers.png?raw=true "a")
 
-## army units
+### army units
 
 Your number of army units.
 
 ![a](./readme_images/army_units.png?raw=true "a")
 
-## selected single
+### selected single
 
 The name of the selected unit if you only clicked on one.
 
 ![a](./readme_images/selected_single.png?raw=true "a")
 
-## mineral extraction info
+### mineral extraction info
 
 Provides your number of workers on the mineral patches visible on screen. Example : when the game starts you have 12/16 workers. Also provides the location to select the corresponding command center using the mouse.
 
 ![a](./readme_images/mineral_extraction0.png?raw=true "a")
 
-## gas extraction info
+### gas extraction info
 
 Provides your number of workers on the gas refineries visible on screen. Also provides the location to select the corresponding refinery using the mouse.
 
 ![a](./readme_images/gas_extraction0.png?raw=true "a")
 
-## base locations
+### base locations
 
 Provides rough base locations on the map. It is a list of tuples (x, y).
 
-## resource mask
+### resource mask
 
 An image of the minimap with resources only.
 
 ![a](./readme_images/ressources.png?raw=true "a")
 
-## allies mask
+### allies mask
 
 An image of the minimap with ally positions only.
 
 ![a](./readme_images/allies.png?raw=true "a")
 
-## enemies mask
+### enemies mask
 
 An image of the minimap with enemy positions only. If the enemy was not scouted it will obviously be empty.
 
 ![a](./readme_images/enemies.png?raw=true "a")
 
-## enemy starting base
+### enemy starting base
 
 The enemy starting base position on the minimap. It is a tuple of int.
 
 ![a](./readme_images/enemy_location.png?raw=true "a")
+
+### our starting base
+
+Our starting base position on the minimap. It is a tuple of int.
+
+![a](./readme_images/our_location.png?raw=true "a")

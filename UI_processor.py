@@ -302,6 +302,7 @@ class UI_processor:
     allies_mask = []                    # minimap allies
     enemies_mask = []                   # minimap enemies
     enemy_starting_base = []            # enemy starting base position on the minimap, a tuple (int, int)
+    our_starting_base = []              # our starting base position on the minimap, a tuple (int, int)
 
 
     def __init__(self,
@@ -424,10 +425,20 @@ class UI_processor:
                 red_minimap = cv2.dilate(red_minimap, kernel)
                 _, _, _, centroids = cv2.connectedComponentsWithStats(red_minimap, 4, cv2.CV_32S)
                 self.enemy_starting_base = (int(centroids[1][0]), int(centroids[1][1]))
-                
+
+                # our base starting position
+                left = np.array([0, 140, 0])
+                right = np.array([0, 255, 0])
+                green_minimap = cv2.inRange(self.minimap, left, right)
+                kernel = np.ones((9, 9), np.uint8)
+                green_minimap = cv2.dilate(green_minimap, kernel)
+                _, _, _, centroids = cv2.connectedComponentsWithStats(green_minimap, 4, cv2.CV_32S)
+                self.our_starting_base = (int(centroids[1][0]), int(centroids[1][1]))
+
                 if debug:
                     cv2.imwrite(current_dir + "locations.png", locations)
                     cv2.imwrite(current_dir + "enemy_location.png", red_minimap)
+                    cv2.imwrite(current_dir + "our_location.png", green_minimap)
             
             if debug:
                 cv2.imwrite(current_dir + "minimap.png", self.minimap)
@@ -453,6 +464,7 @@ class UI_processor:
                 print("gas_extraction_infos =     " + str(self.gas_extraction_infos))
             if minimap_init_values:
                 print("enemy base position =      " + str(self.enemy_starting_base))
+                print("our base position =      " + str(self.our_starting_base))
 
 
             if get_building:
