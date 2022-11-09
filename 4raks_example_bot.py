@@ -52,6 +52,7 @@ time.sleep(0.05)
 startup_info = UI_processor(minimap_init_values=True)
 
 x = 50
+y = 300
 
 # https://www.youtube.com/watch?v=X8aAAenFkrU&t=274s we can keep going but for now only print marines, when reaching the end of the array we keep making supply depots and marines
 build_order = ["scv", "supply depot", "scv", "scv", "barracks", "barracks", "barracks", "barracks", "scv", "supply depot"]
@@ -88,10 +89,12 @@ while not keyboard.is_pressed("esc"):
     elif (build_order[0] == "supply depot" or build_order[0] == "barracks") and (start_time == 0 or (time.time() - start_time) > 20):
         for j in range(x, 800, 200):
             breaking = False
-            for i in range(300, 1610, 200):
+            for i in range(y, 1610, 200):
                 # go back on command center view
                 pyautogui.moveTo(clicker_help.control_groups[0][0], clicker_help.control_groups[0][1], duration=0.0, _pause=False)
-                pyautogui.click(clicks=3)
+                pyautogui.click()
+                time.sleep(0.1)
+                pyautogui.click()
                 time.sleep(0.1)
 
                 if info.idle_workers > 0:
@@ -127,19 +130,24 @@ while not keyboard.is_pressed("esc"):
                 if new_info.minerals < mineral_info.minerals: # success
                     breaking = True
                     x = j
+                    y = i
                     if build_order[0] == "barracks":
                         barracks_pos.append((i, j))
                     if start_time == 0:
                         start_time = time.time()
                     print("built : " + build_order.pop(0))
                     break
+            
             if breaking:
                 break
+            y = 300
 
 for i in barracks_pos:
     # go back on command center view
     pyautogui.moveTo(clicker_help.control_groups[0][0], clicker_help.control_groups[0][1], duration=0.0, _pause=False)
-    pyautogui.click(clicks=3)
+    pyautogui.click()
+    time.sleep(0.1)
+    pyautogui.click()
     time.sleep(0.1)
 
     pyautogui.moveTo(i[0], i[1], duration=0.0, _pause=False)
@@ -159,10 +167,26 @@ for i in barracks_pos:
         pyautogui.keyDown("shift")
         pyautogui.press("3")
         pyautogui.keyUp("shift")
+
+        # go back on command center view
+        pyautogui.moveTo(clicker_help.control_groups[0][0], clicker_help.control_groups[0][1], duration=0.0, _pause=False)
+        pyautogui.click()
+        time.sleep(0.1)
+        pyautogui.click()
+        time.sleep(0.1)
+        # select barracks
+        pyautogui.moveTo(clicker_help.control_groups[2][0], clicker_help.control_groups[2][1], duration=0.0, _pause=False)
+        pyautogui.click()
+        time.sleep(0.1)
+        # rally on one barrack
+        pyautogui.moveTo(i[0], i[1], duration=0.0, _pause=False)
+        pyautogui.click(button='right')
+        time.sleep(0.1)
         break
 
 # build order is done, now build only marines + supply and attack
 start_time = 0
+rallied = False
 while not keyboard.is_pressed("esc"):
 
     info = UI_processor(get_supply=True, get_mineral=True, get_army_units=True)
@@ -174,12 +198,14 @@ while not keyboard.is_pressed("esc"):
         while depot_info.minerals < 100:
             depot_info = UI_processor(get_mineral=True, get_idle_workers=True)
 
-        for j in range(x + 200, 800, 200):
+        for j in range(x, 800, 200):
             breaking = False
-            for i in range(300, 1610, 200):
+            for i in range(y, 1610, 200):
                 # go back on command center view
                 pyautogui.moveTo(clicker_help.control_groups[0][0], clicker_help.control_groups[0][1], duration=0.0, _pause=False)
-                pyautogui.click(clicks=3)
+                pyautogui.click()
+                time.sleep(0.1)
+                pyautogui.click()
                 time.sleep(0.1)
 
                 if depot_info.idle_workers > 0:
@@ -208,9 +234,12 @@ while not keyboard.is_pressed("esc"):
                 if new_info.minerals < depot_info.minerals: # success
                     breaking = True
                     x = j
+                    y = i
                     break
+            
             if breaking:
                 break
+            y = 300
         start_time = time.time()
 
     elif info.minerals >= 50:
@@ -225,10 +254,12 @@ while not keyboard.is_pressed("esc"):
     time.sleep(0.1)
     
     if info.army_units > 12:
-        # rally point in enemy base
-        pyautogui.moveTo(25 + startup_info.enemy_starting_base[0], 808 + startup_info.enemy_starting_base[1], duration=0.0, _pause=False)
-        pyautogui.click(button='right')
-        time.sleep(0.1)
+        if not rallied:
+            # rally point in enemy base
+            pyautogui.moveTo(25 + startup_info.enemy_starting_base[0], 808 + startup_info.enemy_starting_base[1], duration=0.0, _pause=False)
+            pyautogui.click(button='right')
+            time.sleep(0.1)
+            rallied = True
         pyautogui.moveTo(clicker_help.army[0], clicker_help.army[1], duration=0.0, _pause=False)
         pyautogui.click()
         time.sleep(0.1)
@@ -246,6 +277,6 @@ while not keyboard.is_pressed("esc"):
             pyautogui.click()
             time.sleep(0.1)
 
-        time.sleep(0.3)
+        time.sleep(1)
 
 print("end")
