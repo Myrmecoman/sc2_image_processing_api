@@ -73,7 +73,7 @@ while not keyboard.is_pressed("esc"):
     else:
         object = units_dictionaries.units[build_order[0]]
     
-    if info.minerals < object[0]:
+    if info.minerals <= object[0]:
         continue
     
     time.sleep(0.2)
