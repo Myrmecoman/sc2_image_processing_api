@@ -424,7 +424,10 @@ class UI_processor:
                 kernel = np.ones((9, 9), np.uint8)
                 red_minimap = cv2.dilate(red_minimap, kernel)
                 _, _, _, centroids = cv2.connectedComponentsWithStats(red_minimap, 4, cv2.CV_32S)
-                self.enemy_starting_base = (int(centroids[1][0]), int(centroids[1][1]))
+                if len(centroids) > 1:
+                    self.enemy_starting_base = (int(centroids[1][0]), int(centroids[1][1]))
+                else:
+                    self.enemy_starting_base = None # red marker not found
 
                 # our base starting position
                 left = np.array([0, 140, 0])
@@ -447,30 +450,18 @@ class UI_processor:
                 cv2.imwrite(current_dir + "enemies.png", self.enemies_mask)
 
         if debug:
-            if get_supply:
-                print("supply =                   " + str(self.supply_left) + "/" + str(self.supply_right))
-            if get_mineral:
-                print("mineral =                  " + str(self.minerals))
-            if get_gas:
-                print("gas =                      " + str(self.gas))
-            if get_idle_workers:
-                print("idle_workers =             " + str(self.idle_workers))
-            if get_army_units:
-                print("army_units =               " + str(self.army_units))
-            if get_selected_single:
-                print("selected_single =          " + str(self.selected_single))
-            if get_extraction_rate:
-                print("mineral_extraction_infos = " + str(self.mineral_extraction_infos))
-                print("gas_extraction_infos =     " + str(self.gas_extraction_infos))
-            if minimap_init_values:
-                print("enemy base position =      " + str(self.enemy_starting_base))
-                print("our base position =      " + str(self.our_starting_base))
+            print("supply =                   " + str(self.supply_left) + "/" + str(self.supply_right))
+            print("mineral =                  " + str(self.minerals))
+            print("gas =                      " + str(self.gas))
+            print("idle_workers =             " + str(self.idle_workers))
+            print("army_units =               " + str(self.army_units))
+            print("selected_single =          " + str(self.selected_single))
+            print("mineral_extraction_infos = " + str(self.mineral_extraction_infos))
+            print("gas_extraction_infos =     " + str(self.gas_extraction_infos))
+            print("enemy base position =      " + str(self.enemy_starting_base))
+            print("our base position =      " + str(self.our_starting_base))
 
-
-            if get_building:
-                cv2.imwrite(current_dir + "building.png", self.building)
-            if get_selected_group:
-                cv2.imwrite(current_dir + "selected_group.png", self.selected_group)
-            if get_game_image:
-                cv2.imwrite(current_dir + "game.png", self.game)
+            cv2.imwrite(current_dir + "building.png", self.building)
+            cv2.imwrite(current_dir + "selected_group.png", self.selected_group)
+            cv2.imwrite(current_dir + "game.png", self.game)
             cv2.imwrite(current_dir + "screenshot.png", image)
