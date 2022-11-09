@@ -17,13 +17,13 @@ The objective is 0.5 sec for the whole image segmentation process, in order to l
 # About the OCR (optical character recognition)
 Tesserocr is reputed faster and usually more precise than pytesseract, however it is more complicated to install.
 
-- If you want to use pytesseract, set the USE_TESSETOCR variable to False in the screenshot_maker.py script.
+- If you want to use pytesseract, set the USE_TESSETOCR variable to False in the UI_processor.py script.
 - If you want to use tesserocr : https://github.com/sirfz/tesserocr
 
 # Files description
 - clicker_helper : provides location to click on the middle or right window of the game.
 - units_dictionaries : dictionaries providing useful info corresponding to different units and buildings.
-- screenshot_maker : makes a screenshot of the game and extracts usefull info such as supply, mineral, gas etc.. Also extracts cropped parts of the game (minimap, central window, right window etc...).
+- UI_processor : makes a screenshot of the game and extracts usefull info from UI such as supply, mineral, gas etc.. Also extracts cropped parts of the game (minimap, central window, right window etc...).
 - main : can be used to write testing code to familiarize with the API.
 - 4raks_example_bot : a simple bot making a 4 barracks all in using this API. The code is 300 lines long and it is not smart at all but this demonstrates that boting using graphics only is possible ! Be careful this code might not work if you have different keybinds, espacialy for the A move since I have a french keyboard and use T move instead.
 
@@ -34,9 +34,9 @@ This code was only tested with terrans so far and will require modifications if 
 
 ![Recommendations](./readme_images/recommended_colors_and_graphics.png?raw=true "Recommendations")
 
-# In depth explanation of the screenshot_maker class
+# In depth explanation of the UI_processor class
 
-The screenshot_maker class is the main class in charge of screenshoting and processing the image. It has many variables and is fully multithreaded. It takes about 0.3 sec to run completely, but sometimes you only need 1 information. Therefore you can disable any processing you want and only keep the one you are interested in (for example, how many minerals do i have ?).
+The UI_processor class is the main class in charge of screenshoting and processing the image. It has many variables and is fully multithreaded. It takes about 0.3 sec to run completely, but sometimes you only need 1 information. Therefore you can disable any processing you want and only keep the one you are interested in (for example, how many minerals do i have ?).
 This class only have a constructor. You can specify debug=True to generate the segmented images and print the results of the process.
 Don't hesitate to read the code, it has comments and the class is quite small.
 

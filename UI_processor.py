@@ -282,7 +282,7 @@ def extraction_handle(image, minerals, gases):
 # multithreaded functions -------------------------------------------------------------------------------
 
 
-class screen_info:
+class UI_processor:
     # setting [None]*1 in order to pass as pointers in threads
     minimap = [None]*1                  # image
     game = [None]*1                     # image
@@ -306,18 +306,35 @@ class screen_info:
 
     def __init__(self,
     debug = False,
-    get_supply = True,
-    get_mineral = True,
-    get_gas = True,
-    get_idle_workers = True,
-    get_army_units = True,
-    get_selected_single = True,
-    get_minimap = True,
-    get_building = True,
-    get_selected_group = True,
-    get_game_image = True,
-    get_extraction_rate = True,
+    get_supply = False,
+    get_mineral = False,
+    get_gas = False,
+    get_idle_workers = False,
+    get_army_units = False,
+    get_selected_single = False,
+    get_minimap = False,
+    get_building = False,
+    get_selected_group = False,
+    get_game_image = False,
+    get_extraction_rate = False,
     minimap_init_values = False): # should only be called once at game startup, this detects mineral patches and the enemy base position
+
+        if debug:
+            get_supply = True
+            get_mineral = True
+            get_gas = True
+            get_idle_workers = True
+            get_army_units = True
+            get_selected_single = True
+            get_minimap = True
+            get_building = True
+            get_selected_group = True
+            get_game_image = True
+            get_extraction_rate = True
+            minimap_init_values = True
+        
+        if minimap_init_values:
+            get_minimap = True
 
         image = []
         with mss.mss() as mss_instance:
