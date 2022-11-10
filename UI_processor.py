@@ -318,7 +318,7 @@ class UI_processor:
     get_selected_group = False,
     get_game_image = False,
     get_extraction_rate = False,
-    minimap_init_values = False): # should only be called once at game startup, this detects mineral patches and the enemy base position
+    minimap_init_values = False): # should only be called once at game startup, this detects mineral patches, the enemy base position and our position
 
         if debug:
             get_supply = True

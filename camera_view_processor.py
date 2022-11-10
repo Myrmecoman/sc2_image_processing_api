@@ -33,25 +33,45 @@ def mineral_patches_handle(img, patches, debug = False):
         res.append((int(centroids[i][0]), int(centroids[i][1])))
     patches[0] = res
 
+def geysers_handle(img, geysers, debug = False):
+    # THIS DOES NOT WORK, TOO MUCH FALSE POSITIVE
+    left = np.array([50, 255, 90])
+    right = np.array([200, 255, 255])
+    patch = cv2.inRange(img, left, right)
+    #kernel = np.ones((5, 5), np.uint8)
+    #patch = cv2.erode(patch, kernel)
+    #kernel = np.ones((13, 13), np.uint8)
+    #patch = cv2.dilate(patch, kernel)
+    if debug:
+        cv2.imwrite(current_dir + "geysers.png", patch)
+
 # multithreaded functions -------------------------------------------------------------------------------
 
 
 class cam_processor:
     # setting [None]*1 in order to pass as pointers in threads
     mineral_patches = [None]*1 # list of tuples (int, int)
+    geysers = [None]*1 # list of tuples (int, int)
 
 
-    def __init__(self, debug = False, cam_view=None, get_mineral_patches = False):
+    def __init__(self,
+    debug = False,
+    cam_view=None,
+    get_mineral_patches = False,
+    get_geysers = False):
 
         if debug:
             get_mineral_patches = True
+            get_geysers = True
 
         if cam_view is None:
             cam_view = UI_processor.UI_processor(get_game_image=True).game
         
-        threads = [None]
+        threads = [None, None]
         if get_mineral_patches:
             threads[0] = Thread(target=mineral_patches_handle, args=(cam_view, self.mineral_patches, debug))
+        if get_geysers:
+            threads[1] = Thread(target=geysers_handle, args=(cam_view, self.geysers, debug))
         
         # running threads
         for i in threads:
@@ -64,6 +84,8 @@ class cam_processor:
                 i.join()
         
         self.mineral_patches = self.mineral_patches[0]
+        self.geysers = self.geysers[0]
         
         if debug:
             print("Mineral patches : " + str(self.mineral_patches))
+            print("Geysers :         " + str(self.geysers))
