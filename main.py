@@ -3,7 +3,9 @@ from UI_processor import UI_processor
 from camera_view_processor import cam_processor
 import pyautogui
 
+
 # run this script then you have 4 seconds to get in a 1v1 ongoing match. It will print info and walk through the ressource patches
+
 
 time.sleep(4)
 
@@ -16,6 +18,7 @@ print()
 start_time = time.time()
 cam_info = cam_processor(debug=True)
 print("%s sec" % (time.time() - start_time))
+
 
 '''
 # this clicks on every detected mineral patch

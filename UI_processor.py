@@ -163,37 +163,51 @@ def supply_handle(image, supply_left, supply_right, debug = False):
     supply_str = img_to_digits(supply, True)
     slash = supply_str.find('/')
     if slash == -1:
-        return
-    supply_left[0] = int(supply_str[:slash])
-    supply_right[0] = int(supply_str[slash + 1:])
+        supply_left[0] = -1
+        supply_right[0] = -1
+    else:
+        supply_left[0] = int(supply_str[:slash])
+        supply_right[0] = int(supply_str[slash + 1:])
 
 def mineral_handle(image, minerals, debug = False):
     mineral = image[22:34, 1519:1594, 2]
     mineral = prepare_for_matching(mineral, 230)
     if debug:
         cv2.imwrite(current_dir + "mineral.png", mineral)
-    minerals[0] = int(img_to_digits(mineral))
+    str_nb = img_to_digits(mineral)
+    if str_nb == '':
+        str_nb = '-1'
+    minerals[0] = int(str_nb)
 
 def gas_handle(image, gas, debug = False):
     gas_temp = image[22:34, 1645:1712, 2]
     gas_temp = prepare_for_matching(gas_temp, 230)
     if debug:
         cv2.imwrite(current_dir + "gas.png", gas_temp)
-    gas[0] = int(img_to_digits(gas_temp))
+    str_nb = img_to_digits(gas_temp)
+    if str_nb == '':
+        str_nb = '-1'
+    gas[0] = int(str_nb)
 
 def idle_workers_handle(image, idle_workers, debug = False):
     idle_worker = cv2.cvtColor(image[749:764, 48:77], cv2.COLOR_BGR2GRAY)
     idle_worker = prepare_for_matching(idle_worker, 80)
     if debug:
         cv2.imwrite(current_dir + "idle_workers.png", idle_worker)
-    idle_workers[0] = int(img_to_digits_idle_scvs_and_army(idle_worker))
+    str_nb = img_to_digits_idle_scvs_and_army(idle_worker)
+    if str_nb == '':
+        str_nb = '-1'
+    idle_workers[0] = int(str_nb)
 
 def army_units_handle(image, army_units, debug = False):
     army_unit = cv2.cvtColor(image[749:763, 128:155], cv2.COLOR_BGR2GRAY)
     army_unit = prepare_for_matching(army_unit, 80)
     if debug:
         cv2.imwrite(current_dir + "army_units.png", army_unit)
-    army_units[0] = int(img_to_digits_idle_scvs_and_army(army_unit))
+    str_nb = img_to_digits_idle_scvs_and_army(army_unit)
+    if str_nb == '':
+        str_nb = '-1'
+    army_units[0] = int(str_nb)
 
 def selected_single_handle(image, selected_singles, debug = False):
     selected_single = cv2.cvtColor(image[895:920, 810:1080], cv2.COLOR_BGR2GRAY)
@@ -284,6 +298,7 @@ def extraction_handle(image, minerals, gases):
 
 class UI_processor:
     # setting [None]*1 in order to pass as pointers in threads
+    image = None
     minimap = [None]*1                  # image
     game = [None]*1                     # image
     building = [None]*1                 # image
@@ -337,35 +352,34 @@ class UI_processor:
         if minimap_init_values:
             get_minimap = True
 
-        image = []
         with mss.mss() as mss_instance:
             monitor = mss_instance.monitors[1]
-            image = cv2.cvtColor(np.array(mss_instance.grab(monitor)), cv2.COLOR_BGRA2BGR)
+            self.image = cv2.cvtColor(np.array(mss_instance.grab(monitor)), cv2.COLOR_BGRA2BGR)
 
         # declaring threads
         threads = [None, None, None, None, None, None, None, None, None, None, None]
         if get_supply:
-            threads[0] = Thread(target=supply_handle, args=(image, self.supply_left, self.supply_right, debug))
+            threads[0] = Thread(target=supply_handle, args=(self.image, self.supply_left, self.supply_right, debug))
         if get_mineral:
-            threads[1] = Thread(target=mineral_handle, args=(image, self.minerals, debug))
+            threads[1] = Thread(target=mineral_handle, args=(self.image, self.minerals, debug))
         if get_gas:
-            threads[2] = Thread(target=gas_handle, args=(image, self.gas, debug))
+            threads[2] = Thread(target=gas_handle, args=(self.image, self.gas, debug))
         if get_idle_workers:
-            threads[3] = Thread(target=idle_workers_handle, args=(image, self.idle_workers, debug))
+            threads[3] = Thread(target=idle_workers_handle, args=(self.image, self.idle_workers, debug))
         if get_army_units:
-            threads[4] = Thread(target=army_units_handle, args=(image, self.army_units, debug))
+            threads[4] = Thread(target=army_units_handle, args=(self.image, self.army_units, debug))
         if get_selected_single:
-            threads[5] = Thread(target=selected_single_handle, args=(image, self.selected_single, debug))
+            threads[5] = Thread(target=selected_single_handle, args=(self.image, self.selected_single, debug))
         if get_minimap:
-            threads[6] = Thread(target=minimap_handle, args=(image, self.minimap))
+            threads[6] = Thread(target=minimap_handle, args=(self.image, self.minimap))
         if get_building:
-            threads[7] = Thread(target=building_handle, args=(image, self.building))
+            threads[7] = Thread(target=building_handle, args=(self.image, self.building))
         if get_selected_group:
-            threads[8] = Thread(target=selected_group_handle, args=(image, self.selected_group))
+            threads[8] = Thread(target=selected_group_handle, args=(self.image, self.selected_group))
         if get_game_image:
-            threads[9] = Thread(target=game_handle, args=(image, self.game))
+            threads[9] = Thread(target=game_handle, args=(self.image, self.game))
         if get_extraction_rate:
-            threads[10] = Thread(target=extraction_handle, args=(image, self.mineral_extraction_infos, self.gas_extraction_infos))
+            threads[10] = Thread(target=extraction_handle, args=(self.image, self.mineral_extraction_infos, self.gas_extraction_infos))
         
         # running threads
         for i in threads:
@@ -464,4 +478,4 @@ class UI_processor:
             cv2.imwrite(current_dir + "building.png", self.building)
             cv2.imwrite(current_dir + "selected_group.png", self.selected_group)
             cv2.imwrite(current_dir + "game.png", self.game)
-            cv2.imwrite(current_dir + "screenshot.png", image)
+            cv2.imwrite(current_dir + "screenshot.png", self.image)
