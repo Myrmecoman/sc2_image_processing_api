@@ -78,7 +78,7 @@ while not keyboard.is_pressed("esc"):
 
     if build_order[0] == "scv":
         clicker.select_group(0)
-        time.sleep(0.1)
+        time.sleep(0.05)
         clicker.click_right_window(0, 0)
         print("built : " + build_order.pop(0))
 
@@ -89,25 +89,25 @@ while not keyboard.is_pressed("esc"):
                 # go back on command center view
                 pyautogui.moveTo(startup_info.our_starting_base[0], startup_info.our_starting_base[1], duration=0.0, _pause=False)
                 pyautogui.click()
-                time.sleep(0.1)
+                time.sleep(0.05)
 
                 if info.idle_workers > 0:
                     clicker.select_idle_workers()
                 else:
                     clicker.select_group(1)
-                time.sleep(0.1)
+                time.sleep(0.05)
 
                 mineral_info = UI_processor(get_mineral=True)
                 
                 if build_order[0] == "supply depot":
                     clicker.click_right_window(2, 0)
-                    time.sleep(0.1)
+                    time.sleep(0.05)
                     clicker.click_right_window(0, 2)
                 else:
                     clicker.click_right_window(2, 0)
-                    time.sleep(0.1)
+                    time.sleep(0.05)
                     clicker.click_right_window(1, 0)
-                time.sleep(0.1)
+                time.sleep(0.05)
 
                 pyautogui.moveTo(i, j, duration=0.0, _pause=False)
                 pyautogui.click()
@@ -134,11 +134,11 @@ for i in barracks_pos:
     # go back on command center view
     pyautogui.moveTo(startup_info.our_starting_base[0], startup_info.our_starting_base[1], duration=0.0, _pause=False)
     pyautogui.click()
-    time.sleep(0.1)
+    time.sleep(0.05)
 
     pyautogui.moveTo(i[0], i[1], duration=0.0, _pause=False)
     pyautogui.click()
-    time.sleep(0.1)
+    time.sleep(0.05)
 
     info = UI_processor(get_selected_single=True)
 
@@ -147,22 +147,22 @@ for i in barracks_pos:
         time.sleep(1)
         pyautogui.moveTo(i[0], i[1], duration=0.0, _pause=False)
         pyautogui.click()
-        time.sleep(0.1)
+        time.sleep(0.05)
         pyautogui.click()
-        time.sleep(0.1)
+        time.sleep(0.05)
         clicker.put_selected_in_group(3)
 
         # go back on command center view
         pyautogui.moveTo(startup_info.our_starting_base[0], startup_info.our_starting_base[1], duration=0.0, _pause=False)
         pyautogui.click()
-        time.sleep(0.1)
+        time.sleep(0.05)
         # select barracks
         clicker.select_group(2)
-        time.sleep(0.1)
+        time.sleep(0.05)
         # rally on one barrack
         pyautogui.moveTo(i[0], i[1], duration=0.0, _pause=False)
         pyautogui.click(button='right')
-        time.sleep(0.1)
+        time.sleep(0.05)
         break
 
 # build order is done, now build only marines + supply and attack
@@ -185,20 +185,20 @@ while not keyboard.is_pressed("esc"):
                 # go back on command center view
                 pyautogui.moveTo(startup_info.our_starting_base[0], startup_info.our_starting_base[1], duration=0.0, _pause=False)
                 pyautogui.click()
-                time.sleep(0.1)
+                time.sleep(0.05)
 
                 if depot_info.idle_workers > 0:
                     clicker.select_idle_workers()
                 else:
                     clicker.select_group(1)
-                time.sleep(0.1)
+                time.sleep(0.05)
 
                 depot_info = UI_processor(get_mineral=True)
                 
                 clicker.click_right_window(2, 0)
-                time.sleep(0.1)
+                time.sleep(0.05)
                 clicker.click_right_window(0, 2)
-                time.sleep(0.1)
+                time.sleep(0.05)
 
                 pyautogui.moveTo(i, j, duration=0.0, _pause=False)
                 pyautogui.click()
@@ -220,33 +220,33 @@ while not keyboard.is_pressed("esc"):
     elif info.minerals >= 50:
         # select barracks
         clicker.select_group(2)
-        time.sleep(0.1)
+        time.sleep(0.05)
         # build marine
         clicker.click_right_window(0, 0)
         
-    time.sleep(0.1)
+    time.sleep(0.05)
     
-    if info.army_units > 12:
+    if info.army_units > 12 or rallied:
         if not rallied:
             # rally point in enemy base
             pyautogui.moveTo(25 + startup_info.enemy_starting_base[0], 808 + startup_info.enemy_starting_base[1], duration=0.0, _pause=False)
             pyautogui.click(button='right')
-            time.sleep(0.1)
+            time.sleep(0.05)
             rallied = True
         clicker.select_army()
-        time.sleep(0.1)
+        time.sleep(0.05)
         pyautogui.press("T") # i have a french keyboard and we use T move, not A move :3
         pyautogui.moveTo(25 + startup_info.enemy_starting_base[0], 808 + startup_info.enemy_starting_base[1], duration=0.0, _pause=False)
         pyautogui.click()
-        time.sleep(0.1)
+        time.sleep(0.05)
 
         while UI_processor(get_idle_workers=True).idle_workers > 0:
             clicker.select_idle_workers()
-            time.sleep(0.1)
+            time.sleep(0.05)
             pyautogui.press("T") # i have a french keyboard and we use T move, not A move :3
             pyautogui.moveTo(25 + startup_info.enemy_starting_base[0], 808 + startup_info.enemy_starting_base[1], duration=0.0, _pause=False)
             pyautogui.click()
-            time.sleep(0.1)
+            time.sleep(0.05)
 
         time.sleep(1)
 
