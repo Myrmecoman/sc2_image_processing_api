@@ -52,7 +52,7 @@ time.sleep(0.05)
 hotkey.put_selected_in_group(2)
 time.sleep(0.05)
 
-startup_info = UI_processor(minimap_init_values=True)
+startup_info = UI_processor(get_minimap_init_values=True)
 
 x = 100
 y = 300

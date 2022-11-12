@@ -110,3 +110,10 @@ The enemy starting base position on the minimap. It is a tuple of int.
 Our starting base position on the minimap. It is a tuple of int.
 
 ![a](./docs_images/our_location.png?raw=true "a")
+
+### Building availability
+
+Tells if a building is avfailable for construction, this uses saturation values.
+
+![a](./docs_images/building.png?raw=true "a")
+![a](./docs_images/right_window_availability.png?raw=true "a")

@@ -231,23 +231,31 @@ def selected_single_handle(image, selected_singles, debug = False):
         output = ''
     selected_singles[0] = output
 
-def minimap_handle(image, minimaps):
+def minimap_handle(image, minimaps, debug = False):
     minimaps[0] = image[808:1065, 25:291]
+    if debug:
+        cv2.imwrite(current_dir + "minimap.png", minimaps[0])
 
-def building_handle(image, buildings):
+def building_handle(image, buildings, debug = False):
     buildings[0] = image[850:1061, 1536:1896]
+    if debug:
+        cv2.imwrite(current_dir + "building.png", buildings[0])
 
-def selected_group_handle(image, selected_groups):
+def selected_group_handle(image, selected_groups, debug = False):
     selected_groups[0] = image[887:1058, 661:1121]
+    if debug:
+        cv2.imwrite(current_dir + "selected_group.png", selected_groups[0])
 
-def game_handle(image, games):
+def game_handle(image, games, debug = False):
     game = copy.deepcopy(image[:823, :])
     game[:41, 1490:] = 0
     game[783:, 1518:] = 0
     game[745:, :359] = 0
     games[0] = game
+    if debug:
+        cv2.imwrite(current_dir + "game.png", games[0])
 
-def extraction_handle(image, minerals, gases):
+def extraction_handle(image, minerals, gases, debug = False):
     mineral_temp = cv2.imread(str(pathlib.Path(__file__).parent.absolute()) + "\\templates\\resource_templates\\mineral.png")
     gas_temp = cv2.imread(str(pathlib.Path(__file__).parent.absolute()) + "\\templates\\resource_templates\\gas.png")
 
@@ -264,7 +272,8 @@ def extraction_handle(image, minerals, gases):
         extraction = prepare_for_matching(extraction, 130)
         extraction[:, 12] = 0
         extraction[:, 24] = 0
-        cv2.imwrite(current_dir + "mineral_extraction" + str(len(mineral_list)) + ".png", extraction)
+        if debug:
+            cv2.imwrite(current_dir + "mineral_extraction" + str(len(mineral_list)) + ".png", extraction)
         extraction = img_to_digits_extraction(extraction)
         slash = extraction.find('/')
         if slash == -1:
@@ -282,7 +291,8 @@ def extraction_handle(image, minerals, gases):
         extraction = prepare_for_matching(extraction, 130)
         extraction[:, 13] = 0
         extraction[:, 24] = 0
-        cv2.imwrite(current_dir + "gas_extraction" + str(len(gas_list)) + ".png", extraction)
+        if debug:
+            cv2.imwrite(current_dir + "gas_extraction" + str(len(gas_list)) + ".png", extraction)
         extraction = img_to_digits_extraction(extraction)
         slash = extraction.find('/')
         if slash == -1:
@@ -293,31 +303,60 @@ def extraction_handle(image, minerals, gases):
     minerals[0] = mineral_list
     gases[0] = gas_list
 
+def right_availability_handle(image, right_buttons, debug = False):
+    buildings = [None]*1
+    building_handle(image, buildings)
+    buildings = buildings[0]
+    hsv = cv2.cvtColor(buildings, cv2.COLOR_BGR2HSV)
+    hsv = hsv[:, :, 1]
+    if debug:
+        cv2.imwrite(current_dir + "right_window_availability.png", hsv)
+    rows = [[False, False, False, False, False],
+            [False, False, False, False, False],
+            [False, False, False, False, False]]
+    x = 0
+    y = 0
+    for i in range(30, 180, 74):
+        for j in range(40, 325, 71):
+            square = hsv[i-10:i+10, j-10:j+10]
+            # cv2.imwrite(current_dir + "right_window_availability" + str(y) + str(x) + ".png", square)
+            avg = square.mean()
+            if avg >= 5:
+                rows[y][x] = True
+            else:
+                rows[y][x] = False
+            x += 1
+        y += 1
+        x = 0
+    right_buttons[0] = rows
+    print(rows)
+
 # multithreaded functions -------------------------------------------------------------------------------
 
 
 class UI_processor:
     # setting [None]*1 in order to pass as pointers in threads
     image = None
-    minimap = [None]*1                  # image
-    game = [None]*1                     # image
-    building = [None]*1                 # image
-    selected_group = [None]*1           # image
-    supply_left = [None]*1              # int
-    supply_right = [None]*1             # int
-    minerals = [None]*1                 # int
-    gas = [None]*1                      # int
-    idle_workers = [None]*1             # int
-    army_units = [None]*1               # int
-    selected_single = [None]*1          # string
-    mineral_extraction_infos = [None]*1 # list of ((int, int), (int, int)) corresponding to (( nb_workers/workers_max ), ( position_x, position_y )) where position is click position to select the command center
-    gas_extraction_infos = [None]*1     # list of ((int, int), (int, int)) corresponding to (( nb_workers/workers_max ), ( position_x, position_y )) where position is click position to select the refinery
-    base_locations = []                 # list of base locations on minimap
-    resources_mask = []                 # minimap resources
-    allies_mask = []                    # minimap allies
-    enemies_mask = []                   # minimap enemies
-    enemy_starting_base = []            # enemy starting base position on the minimap, a tuple (int, int)
-    our_starting_base = []              # our starting base position on the minimap, a tuple (int, int)
+    minimap = [None]*1                       # image
+    game = [None]*1                          # image
+    building = [None]*1                      # image
+    selected_group = [None]*1                # image
+    supply_left = [None]*1                   # int
+    supply_right = [None]*1                  # int
+    minerals = [None]*1                      # int
+    gas = [None]*1                           # int
+    idle_workers = [None]*1                  # int
+    army_units = [None]*1                    # int
+    selected_single = [None]*1               # string
+    mineral_extraction_infos = [None]*1      # list of ((int, int), (int, int)) corresponding to (( nb_workers/workers_max ), ( position_x, position_y )) where position is click position to select the command center
+    gas_extraction_infos = [None]*1          # list of ((int, int), (int, int)) corresponding to (( nb_workers/workers_max ), ( position_x, position_y )) where position is click position to select the refinery
+    right_window_button_available = [None]*1 # list of list of bool
+    base_locations = []                      # list of base locations on minimap
+    resources_mask = []                      # minimap resources
+    allies_mask = []                         # minimap allies
+    enemies_mask = []                        # minimap enemies
+    enemy_starting_base = []                 # enemy starting base position on the minimap, a tuple (int, int)
+    our_starting_base = []                   # our starting base position on the minimap, a tuple (int, int)
 
 
     def __init__(self,
@@ -333,7 +372,8 @@ class UI_processor:
     get_selected_group = False,
     get_game_image = False,
     get_extraction_rate = False,
-    minimap_init_values = False): # should only be called once at game startup, this detects mineral patches, the enemy base position and our position
+    get_minimap_init_values = False,
+    get_right_window_buttons_availability = False): # should only be called once at game startup, this detects mineral patches, the enemy base position and our position
 
         if debug:
             get_supply = True
@@ -347,9 +387,10 @@ class UI_processor:
             get_selected_group = True
             get_game_image = True
             get_extraction_rate = True
-            minimap_init_values = True
+            get_minimap_init_values = True
+            get_right_window_buttons_availability = True
         
-        if minimap_init_values:
+        if get_minimap_init_values:
             get_minimap = True
 
         with mss.mss() as mss_instance:
@@ -357,7 +398,7 @@ class UI_processor:
             self.image = cv2.cvtColor(np.array(mss_instance.grab(monitor)), cv2.COLOR_BGRA2BGR)
 
         # declaring threads
-        threads = [None, None, None, None, None, None, None, None, None, None, None]
+        threads = [None, None, None, None, None, None, None, None, None, None, None, None]
         if get_supply:
             threads[0] = Thread(target=supply_handle, args=(self.image, self.supply_left, self.supply_right, debug))
         if get_mineral:
@@ -371,15 +412,17 @@ class UI_processor:
         if get_selected_single:
             threads[5] = Thread(target=selected_single_handle, args=(self.image, self.selected_single, debug))
         if get_minimap:
-            threads[6] = Thread(target=minimap_handle, args=(self.image, self.minimap))
+            threads[6] = Thread(target=minimap_handle, args=(self.image, self.minimap, debug))
         if get_building:
-            threads[7] = Thread(target=building_handle, args=(self.image, self.building))
+            threads[7] = Thread(target=building_handle, args=(self.image, self.building, debug))
         if get_selected_group:
-            threads[8] = Thread(target=selected_group_handle, args=(self.image, self.selected_group))
+            threads[8] = Thread(target=selected_group_handle, args=(self.image, self.selected_group, debug))
         if get_game_image:
-            threads[9] = Thread(target=game_handle, args=(self.image, self.game))
+            threads[9] = Thread(target=game_handle, args=(self.image, self.game, debug))
         if get_extraction_rate:
-            threads[10] = Thread(target=extraction_handle, args=(self.image, self.mineral_extraction_infos, self.gas_extraction_infos))
+            threads[10] = Thread(target=extraction_handle, args=(self.image, self.mineral_extraction_infos, self.gas_extraction_infos, debug))
+        if get_right_window_buttons_availability:
+            threads[11] = Thread(target=right_availability_handle, args=(self.image, self.right_window_button_available, debug))
         
         # running threads
         for i in threads:
@@ -404,6 +447,7 @@ class UI_processor:
         self.selected_single = self.selected_single[0]
         self.mineral_extraction_infos = self.mineral_extraction_infos[0]
         self.gas_extraction_infos = self.gas_extraction_infos[0]
+        self.right_window_button_available = self.right_window_button_available[0]
 
         if get_minimap:
             # getting resources
@@ -419,7 +463,7 @@ class UI_processor:
             self.enemies_mask = cv2.inRange(self.minimap, left, right)
 
             # finding approximate base locations and enemy base starting position
-            if minimap_init_values:
+            if get_minimap_init_values:
                 # base locations
                 kernel = np.ones((7, 7), np.uint8)
                 locations = copy.deepcopy(self.resources_mask)
@@ -458,7 +502,6 @@ class UI_processor:
                     cv2.imwrite(current_dir + "our_location.png", green_minimap)
             
             if debug:
-                cv2.imwrite(current_dir + "minimap.png", self.minimap)
                 cv2.imwrite(current_dir + "ressources.png", self.resources_mask)
                 cv2.imwrite(current_dir + "allies.png", self.allies_mask)
                 cv2.imwrite(current_dir + "enemies.png", self.enemies_mask)
@@ -473,9 +516,6 @@ class UI_processor:
             print("mineral_extraction_infos = " + str(self.mineral_extraction_infos))
             print("gas_extraction_infos =     " + str(self.gas_extraction_infos))
             print("enemy base position =      " + str(self.enemy_starting_base))
-            print("our base position =      " + str(self.our_starting_base))
-
-            cv2.imwrite(current_dir + "building.png", self.building)
-            cv2.imwrite(current_dir + "selected_group.png", self.selected_group)
-            cv2.imwrite(current_dir + "game.png", self.game)
+            print("our base position =        " + str(self.our_starting_base))
+            print("right availability =       " + str(self.right_window_button_available))
             cv2.imwrite(current_dir + "screenshot.png", self.image)
