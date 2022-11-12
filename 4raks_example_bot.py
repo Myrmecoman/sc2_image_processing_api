@@ -1,5 +1,6 @@
 import time
 from UI_processor import UI_processor
+from camera_view_processor import cam_processor
 from clicker_helper import clicker_helper as clicker_help
 import pyautogui
 import numpy as np
@@ -87,35 +88,29 @@ while not keyboard.is_pressed("esc"):
             breaking = False
             for i in range(y, 1610, 200):
                 # go back on command center view
-                pyautogui.moveTo(startup_info.our_starting_base[0], startup_info.our_starting_base[1], duration=0.0, _pause=False)
-                pyautogui.click()
-                time.sleep(0.05)
+                pyautogui.moveTo(25 + startup_info.our_starting_base[0], 808 + startup_info.our_starting_base[1], duration=0.0, _pause=False)
+                time.sleep(0.1)
 
                 if info.idle_workers > 0:
                     clicker.select_idle_workers()
                 else:
                     clicker.select_group(1)
-                time.sleep(0.05)
-
-                mineral_info = UI_processor(get_mineral=True)
+                time.sleep(0.1)
                 
+                clicker.click_right_window(2, 0)
+                time.sleep(0.1)
                 if build_order[0] == "supply depot":
-                    clicker.click_right_window(2, 0)
-                    time.sleep(0.05)
                     clicker.click_right_window(0, 2)
                 else:
-                    clicker.click_right_window(2, 0)
-                    time.sleep(0.05)
                     clicker.click_right_window(1, 0)
-                time.sleep(0.05)
+                time.sleep(0.1)
 
                 pyautogui.moveTo(i, j, duration=0.0, _pause=False)
-                pyautogui.click()
                 time.sleep(0.2)
 
-                new_info = UI_processor(get_mineral=True)
-
-                if new_info.minerals < mineral_info.minerals: # success
+                building_authorized = cam_processor(get_building_authorization=True).building_authorized
+                if building_authorized: # success
+                    pyautogui.click()
                     breaking = True
                     x = j
                     y = i
@@ -132,7 +127,7 @@ while not keyboard.is_pressed("esc"):
 
 for i in barracks_pos:
     # go back on command center view
-    pyautogui.moveTo(startup_info.our_starting_base[0], startup_info.our_starting_base[1], duration=0.0, _pause=False)
+    pyautogui.moveTo(25 + startup_info.our_starting_base[0], 808 + startup_info.our_starting_base[1], duration=0.0, _pause=False)
     pyautogui.click()
     time.sleep(0.05)
 
@@ -153,7 +148,7 @@ for i in barracks_pos:
         clicker.put_selected_in_group(3)
 
         # go back on command center view
-        pyautogui.moveTo(startup_info.our_starting_base[0], startup_info.our_starting_base[1], duration=0.0, _pause=False)
+        pyautogui.moveTo(25 + startup_info.our_starting_base[0], 808 + startup_info.our_starting_base[1], duration=0.0, _pause=False)
         pyautogui.click()
         time.sleep(0.05)
         # select barracks
@@ -183,30 +178,26 @@ while not keyboard.is_pressed("esc"):
             breaking = False
             for i in range(y, 1610, 200):
                 # go back on command center view
-                pyautogui.moveTo(startup_info.our_starting_base[0], startup_info.our_starting_base[1], duration=0.0, _pause=False)
-                pyautogui.click()
-                time.sleep(0.05)
+                pyautogui.moveTo(25 + startup_info.our_starting_base[0], 808 + startup_info.our_starting_base[1], duration=0.0, _pause=False)
+                time.sleep(0.1)
 
                 if depot_info.idle_workers > 0:
                     clicker.select_idle_workers()
                 else:
                     clicker.select_group(1)
-                time.sleep(0.05)
+                time.sleep(0.1)
 
-                depot_info = UI_processor(get_mineral=True)
-                
                 clicker.click_right_window(2, 0)
-                time.sleep(0.05)
+                time.sleep(0.1)
                 clicker.click_right_window(0, 2)
-                time.sleep(0.05)
+                time.sleep(0.1)
 
                 pyautogui.moveTo(i, j, duration=0.0, _pause=False)
-                pyautogui.click()
                 time.sleep(0.2)
 
-                new_info = UI_processor(get_mineral=True)
-
-                if new_info.minerals < depot_info.minerals: # success
+                building_authorized = cam_processor(get_building_authorization=True).building_authorized
+                if building_authorized: # success
+                    pyautogui.click()
                     breaking = True
                     x = j
                     y = i

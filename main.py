@@ -23,7 +23,6 @@ print("%s sec" % (time.time() - start_time))
 '''
 # this clicks on every detected mineral patch
 for i in cam_info.mineral_patches:
-    # (25, 808) is the minimap starting coordinates
     pyautogui.moveTo(i[0], i[1], duration=0.0, _pause=False)
     pyautogui.click()
     time.sleep(2)

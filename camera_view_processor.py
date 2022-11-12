@@ -5,6 +5,7 @@ import copy
 from threading import Thread
 import mss
 import UI_processor
+import random
 
 
 current_dir = str(pathlib.Path(__file__).parent.absolute()) + "\\camera_view_processor_debug\\"
@@ -45,33 +46,55 @@ def geysers_handle(img, geysers, debug = False):
     if debug:
         cv2.imwrite(current_dir + "geysers.png", patch)
 
+def building_authorization_handle(img, authorized, debug = False):
+    left = np.array([5, 5, 145])
+    right = np.array([50, 50, 220])
+    building = cv2.inRange(img, left, right)
+    kernel = np.ones((11, 11), np.uint8)
+    building = cv2.dilate(building, kernel)
+    if debug:
+        cv2.imwrite(current_dir + "building_authorization.png", building)
+
+    refusal_template = cv2.imread(str(pathlib.Path(__file__).parent.absolute()) + "\\templates\\building_authorization\\refusal_pattern.png", cv2.IMREAD_GRAYSCALE)
+    res = cv2.matchTemplate(building, refusal_template, cv2.TM_CCOEFF_NORMED)
+    _, max_val, _, _ = cv2.minMaxLoc(res)
+    if max_val > 0.3:
+        authorized[0] = False
+    else:
+        authorized[0] = True
+
 # multithreaded functions -------------------------------------------------------------------------------
 
 
 class cam_processor:
     # setting [None]*1 in order to pass as pointers in threads
-    mineral_patches = [None]*1 # list of tuples (int, int)
-    geysers = [None]*1 # list of tuples (int, int)
+    mineral_patches = [None]*1    # list of tuples (int, int)
+    geysers = [None]*1            # list of tuples (int, int) /!\ this does not work and cannot be infered using basic image processing techniques like using colors and contrasts.
+    building_authorized = [None]*1 # bool
 
 
     def __init__(self,
     debug = False,
     cam_view=None,
     get_mineral_patches = False,
-    get_geysers = False):
+    get_geysers = False,
+    get_building_authorization = False):
 
         if debug:
             get_mineral_patches = True
             get_geysers = True
+            get_building_authorization = True
 
         if cam_view is None:
             cam_view = UI_processor.UI_processor(get_game_image=True).game
         
-        threads = [None, None]
+        threads = [None, None, None]
         if get_mineral_patches:
             threads[0] = Thread(target=mineral_patches_handle, args=(cam_view, self.mineral_patches, debug))
         if get_geysers:
             threads[1] = Thread(target=geysers_handle, args=(cam_view, self.geysers, debug))
+        if get_building_authorization:
+            threads[2] = Thread(target=building_authorization_handle, args=(cam_view, self.building_authorized, debug))
         
         # running threads
         for i in threads:
@@ -85,7 +108,9 @@ class cam_processor:
         
         self.mineral_patches = self.mineral_patches[0]
         self.geysers = self.geysers[0]
+        self.building_authorized = self.building_authorized[0]
         
         if debug:
-            print("Mineral patches : " + str(self.mineral_patches))
-            print("Geysers :         " + str(self.geysers))
+            print("Mineral patches :             " + str(self.mineral_patches))
+            print("Geysers :                     " + str(self.geysers))
+            print("Building authorized :         " + str(self.building_authorized))
