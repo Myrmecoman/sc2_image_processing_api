@@ -21,12 +21,13 @@ Tesserocr is reputed faster and usually more precise than pytesseract, however i
 - If you want to use tesserocr : https://github.com/sirfz/tesserocr
 
 # Files description
+- hotkey_helper : provides functions to easily do actions. This will only work if you have my keybinds (available in the keybinds folder), otherwise you can also change the keys in it to match your hotkeys.
 - clicker_helper : provides location to click on the middle or right window of the game.
 - units_dictionaries : dictionaries providing useful info corresponding to different units and buildings.
 - UI_processor : makes a screenshot of the game and extracts usefull info from UI such as supply, mineral, gas etc.. Also extracts cropped parts of the game (minimap, central window, right window etc...).
 - camera_view_processor : uses the game windows captured by the UI_processor, or screenshots it by itself, in order to find element in the camera view window. It can find mineral patches for example, in order to order workers to go back to mining. /!\ Work In Progress
 - main : can be used to write testing code to familiarize with the API.
-- 4raks_example_bot : a simple bot making a 4 barracks all in using this API. The code is 250 lines long and it is not smart at all but this demonstrates that boting using graphics only is possible ! Be careful this code might not work if you have different keybinds, espacialy for the A move since I have a french keyboard and use T move instead.
+- 4raks_example_bot : a simple bot making a 4 barracks all in using this API. The code is 250 lines long and it is not smart at all but this demonstrates that boting using graphics only is possible ! Be careful this code will not work if you have different keybinds from mine, and I have a French keyboard. You can find my hotkeys in the hotkeys folder, otherwise you can convert every key in the hotkey_helper.py file to match yours.
 
 # Usage prerequisites
 This code expects to screenshot a usual 1v1 game against a human or an AI. The minimap colors must be set on Default for you and Default for the enemy (see image below).

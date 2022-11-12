@@ -22,7 +22,3 @@ Ex: when having selected an SCV, if you want to build a barrack do click_right_w
 ### click_middle_window(int, int)
 
 Clicks the corresponding object on the middle window of the game. When multiple elements are selected, this can be used to get on of them.
-
-### put_selected_in_group(int)
-
-Put selected element(s) in the corresponding group. This uses keyboards keys and therefore can change depending on your keybinds in the game.

@@ -43,8 +43,3 @@ class clicker_helper:
     def click_middle_window(self, x, y):
         pyautogui.moveTo(self.middle_window[x][y][0], self.middle_window[x][y][1], duration=0.0, _pause=False)
         pyautogui.click()
-
-    def put_selected_in_group(self, id):
-        pyautogui.keyDown("shift") # shift + number adds units to a control group on my keybinds, change accordingly to yours
-        pyautogui.press(str(id))
-        pyautogui.keyUp("shift")
