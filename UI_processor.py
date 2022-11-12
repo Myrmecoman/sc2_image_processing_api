@@ -318,7 +318,7 @@ def right_availability_handle(image, right_buttons, debug = False):
     y = 0
     for i in range(30, 180, 74):
         for j in range(40, 325, 71):
-            square = hsv[i-10:i+10, j-10:j+10]
+            square = hsv[i-25:i+25, j-25:j+25]
             # cv2.imwrite(current_dir + "right_window_availability" + str(y) + str(x) + ".png", square)
             avg = square.mean()
             if avg >= 5:
@@ -329,7 +329,6 @@ def right_availability_handle(image, right_buttons, debug = False):
         y += 1
         x = 0
     right_buttons[0] = rows
-    print(rows)
 
 # multithreaded functions -------------------------------------------------------------------------------
 

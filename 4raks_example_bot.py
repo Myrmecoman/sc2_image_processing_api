@@ -80,11 +80,21 @@ while not keyboard.is_pressed("esc"):
 
     if build_order[0] == "scv":
         clicker.select_group(0)
-        time.sleep(0.05)
+        time.sleep(0.1)
         pyautogui.press(hotkey.build_scv)
         print("built : " + build_order.pop(0))
+        continue
 
-    elif (build_order[0] == "supply depot" or build_order[0] == "barracks") and (start_time == 0 or (time.time() - start_time) > 21):
+    if info.idle_workers > 0:
+        pyautogui.press(hotkey.select_idle_workers)
+    else:
+        clicker.select_group(1)
+    time.sleep(0.1)     
+    pyautogui.press(hotkey.scv_build_structure)
+    time.sleep(0.3)
+    info = UI_processor(get_idle_workers=True, get_right_window_buttons_availability=True)
+
+    if (build_order[0] == "supply depot" and info.right_window_button_available[0][2]) or (build_order[0] == "barracks" and info.right_window_button_available[1][0]):
         for j in range(x, 800, 200):
             breaking = False
             for i in range(y, 1610, 200):
