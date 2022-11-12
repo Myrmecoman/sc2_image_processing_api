@@ -10,6 +10,7 @@ import pathlib
 import mss
 import units_dictionaries
 import keyboard
+import random
 
 
 print("Waiting for the game to start")
@@ -38,19 +39,22 @@ while not keyboard.is_pressed("esc"):
 
 print("The game started")
 
+# this goes to a random base, it is mainly used by zerg player to inject by here we need to to center the command center
+pyautogui.press(hotkey.go_to_random_base)
+
 # command center in control group 1
 pyautogui.moveTo(1920/2, 400, duration=0.0, _pause=False)
 pyautogui.click()
-time.sleep(0.05)
+time.sleep(0.1)
 hotkey.put_selected_in_group(1)
-time.sleep(0.05)
+time.sleep(0.1)
 
 # workers in control group 2
 pyautogui.moveTo(100, 100, duration=0.0, _pause=True)
 pyautogui.dragTo(1500, 800, button='left')
-time.sleep(0.05)
+time.sleep(0.1)
 hotkey.put_selected_in_group(2)
-time.sleep(0.05)
+time.sleep(0.1)
 
 startup_info = UI_processor(get_minimap_init_values=True)
 
@@ -75,8 +79,11 @@ while not keyboard.is_pressed("esc"):
     else:
         object = units_dictionaries.units[build_order[0]]
     
-    if info.minerals <= object[0]:
+    if info.minerals < object[0]:
         continue
+    
+    #cv2.putText(info.image, str(info.minerals), (100, 100), cv2.FONT_HERSHEY_SIMPLEX, 5, (0, 255, 0), 3)
+    #cv2.imwrite(str(pathlib.Path(__file__).parent.absolute()) + "\\debug\\mineral" + str(random.random()) + ".png", info.image)
 
     if build_order[0] == "scv":
         clicker.select_group(0)
@@ -229,7 +236,7 @@ while not keyboard.is_pressed("esc"):
         
     time.sleep(0.05)
     
-    if info.army_units > 12 or rallied:
+    if info.army_units >= 12 or rallied:
         if not rallied:
             # rally point in enemy base
             pyautogui.moveTo(25 + startup_info.enemy_starting_base[0], 808 + startup_info.enemy_starting_base[1], duration=0.0, _pause=False)

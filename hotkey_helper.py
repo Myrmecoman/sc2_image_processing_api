@@ -33,6 +33,7 @@ class hotkey_helper:
     build_add_on_tech_lab = "w"
     build_add_on_reactor = "x"
 
+    go_to_random_base = "space"
     select_idle_workers = "tab"
     select_army = "F2"
 
