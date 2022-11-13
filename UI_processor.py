@@ -127,13 +127,15 @@ def img_to_letters(img):
         if stats[i][cv2.CC_STAT_HEIGHT] < 5: # removing small components which are certainly i dots
             continue
         new_cropped = img[:, (stats[i][cv2.CC_STAT_LEFT] - 1):(stats[i][cv2.CC_STAT_LEFT] + stats[i][cv2.CC_STAT_WIDTH] + 1)]
-        cropped.append((centroids[i][0], cv2.copyMakeBorder(new_cropped, top=4, bottom=4, left=10, right=10, borderType=cv2.BORDER_CONSTANT, value=0)))
+        cropped.append((centroids[i][0], cv2.copyMakeBorder(new_cropped, top=10, bottom=10, left=14, right=14, borderType=cv2.BORDER_CONSTANT, value=0)))
     cropped.sort()
 
     # loading templates
     templates = []
     for i in range(26):
         templates.append(cv2.imread(str(pathlib.Path(__file__).parent.absolute()) + "\\templates\\letters\\" + chr(ord('a') + i) + ".png", cv2.IMREAD_GRAYSCALE))
+    for i in range(26):
+        templates.append(cv2.imread(str(pathlib.Path(__file__).parent.absolute()) + "\\templates\\letters\\" + chr(ord('a') + i) + "m.png", cv2.IMREAD_GRAYSCALE))
     
     # matching each character with each template and keeping best match
     word = ""
@@ -144,7 +146,10 @@ def img_to_letters(img):
             _, max_val, _, _ = cv2.minMaxLoc(res)
             char_result.append(max_val)
         max_index = char_result.index(max(char_result))
-        word += chr(ord('a') + max_index)
+        if max_index >= 26:
+            word += chr(ord('a') + max_index - 26)
+        else:
+            word += chr(ord('a') + max_index)
 
     return word
 
@@ -216,7 +221,6 @@ def selected_single_handle(image, selected_singles, debug = False):
         cv2.imwrite(current_dir + "selected_single.png", selected_single)
     
     output = img_to_letters(selected_single)
-    print(output)
     min_dist = (100, '')
     for key in units_dictionaries.buildings:
         distance = lev(output, key)
