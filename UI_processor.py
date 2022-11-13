@@ -25,7 +25,8 @@ def img_to_digits(img, is_supply = False):
         if stats[i][cv2.CC_STAT_HEIGHT] < img.shape[0] - 3: # removing small components which are certainly not characters
             continue
         new_cropped = img[:, (stats[i][cv2.CC_STAT_LEFT] - 1):(stats[i][cv2.CC_STAT_LEFT] + stats[i][cv2.CC_STAT_WIDTH] + 1)]
-        cropped.append(cv2.copyMakeBorder(new_cropped, top=2, bottom=2, left=2, right=2, borderType=cv2.BORDER_CONSTANT, value=0))
+        cropped.append((centroids[i][0], cv2.copyMakeBorder(new_cropped, top=2, bottom=2, left=2, right=2, borderType=cv2.BORDER_CONSTANT, value=0)))
+    cropped.sort()
 
     # loading templates
     templates = []
@@ -39,7 +40,7 @@ def img_to_digits(img, is_supply = False):
     for c in range(len(cropped)):
         char_result = []
         for i in range(len(templates)):
-            res = cv2.matchTemplate(cropped[c], templates[i], cv2.TM_CCOEFF_NORMED)
+            res = cv2.matchTemplate(cropped[c][1], templates[i], cv2.TM_CCOEFF_NORMED)
             _, max_val, _, _ = cv2.minMaxLoc(res)
             char_result.append(max_val)
         max_value = max(char_result)
@@ -60,7 +61,8 @@ def img_to_digits_idle_scvs_and_army(img):
     cropped = []
     for i in range(1, num_labels):
         new_cropped = img[:, (stats[i][cv2.CC_STAT_LEFT] - 1):(stats[i][cv2.CC_STAT_LEFT] + stats[i][cv2.CC_STAT_WIDTH] + 1)]
-        cropped.append(cv2.copyMakeBorder(new_cropped, top=2, bottom=2, left=2, right=2, borderType=cv2.BORDER_CONSTANT, value=0))
+        cropped.append((centroids[i][0], cv2.copyMakeBorder(new_cropped, top=2, bottom=2, left=2, right=2, borderType=cv2.BORDER_CONSTANT, value=0)))
+    cropped.sort()
 
     # loading templates
     templates = []
@@ -72,7 +74,7 @@ def img_to_digits_idle_scvs_and_army(img):
     for c in range(len(cropped)):
         char_result = []
         for i in range(len(templates)):
-            res = cv2.matchTemplate(cropped[c], templates[i], cv2.TM_CCOEFF_NORMED)
+            res = cv2.matchTemplate(cropped[c][1], templates[i], cv2.TM_CCOEFF_NORMED)
             _, max_val, _, _ = cv2.minMaxLoc(res)
             char_result.append(max_val)
         max_index = char_result.index(max(char_result))
@@ -91,7 +93,8 @@ def img_to_digits_extraction(img):
         if stats[i][cv2.CC_STAT_AREA] > 100: # too big, can't be a character
             continue
         new_cropped = img[:, (stats[i][cv2.CC_STAT_LEFT] - 1):(stats[i][cv2.CC_STAT_LEFT] + stats[i][cv2.CC_STAT_WIDTH] + 1)]
-        cropped.append(cv2.copyMakeBorder(new_cropped, top=2, bottom=2, left=2, right=2, borderType=cv2.BORDER_CONSTANT, value=0))
+        cropped.append((centroids[i][0], cv2.copyMakeBorder(new_cropped, top=2, bottom=2, left=2, right=2, borderType=cv2.BORDER_CONSTANT, value=0)))
+    cropped.sort()
 
     # loading templates
     templates = []
@@ -104,7 +107,7 @@ def img_to_digits_extraction(img):
     for c in range(len(cropped)):
         char_result = []
         for i in range(len(templates)):
-            res = cv2.matchTemplate(cropped[c], templates[i], cv2.TM_CCOEFF_NORMED)
+            res = cv2.matchTemplate(cropped[c][1], templates[i], cv2.TM_CCOEFF_NORMED)
             _, max_val, _, _ = cv2.minMaxLoc(res)
             char_result.append(max_val)
         max_value = max(char_result)
