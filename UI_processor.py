@@ -2,24 +2,16 @@ import cv2
 import numpy as np
 import pathlib
 import copy
-import pytesseract
 from threading import Thread
 from PIL import Image
 from Levenshtein import distance as lev
 import units_dictionaries
 import mss
+import random
 
 
 # This file extracts the data from a screenshot.
-# The ocr only extracts text data, numbers are extracted using template matching
-
-
-# tesserocr is faster and usually more precise on its last version. To install it :
-# https://github.com/sirfz/tesserocr
-USE_TESSEROCR = True
-if USE_TESSEROCR:
-    import tesserocr
-    #print(tesserocr.tesseract_version())  # print tesseract-ocr version
+# Everything is extracted using template matching
 
 
 current_dir = str(pathlib.Path(__file__).parent.absolute()) + "\\UI_processor_debug\\"
@@ -128,29 +120,37 @@ def img_to_digits_extraction(img):
 
 
 def img_to_letters(img):
+    # cropping each character
+    num_labels, labels_ids, stats, centroids = cv2.connectedComponentsWithStats(img, 4, cv2.CV_32S) # this is unordered !
+    cropped = []
+    for i in range(1, num_labels):
+        if stats[i][cv2.CC_STAT_HEIGHT] < 5: # removing small components which are certainly i dots
+            continue
+        new_cropped = img[:, (stats[i][cv2.CC_STAT_LEFT] - 1):(stats[i][cv2.CC_STAT_LEFT] + stats[i][cv2.CC_STAT_WIDTH] + 1)]
+        cropped.append((centroids[i][0], cv2.copyMakeBorder(new_cropped, top=4, bottom=4, left=10, right=10, borderType=cv2.BORDER_CONSTANT, value=0)))
+    cropped.sort()
+
+    # loading templates
+    templates = []
+    for i in range(26):
+        templates.append(cv2.imread(str(pathlib.Path(__file__).parent.absolute()) + "\\templates\\letters\\" + chr(ord('a') + i) + ".png", cv2.IMREAD_GRAYSCALE))
+    
+    # matching each character with each template and keeping best match
     word = ""
-    if not USE_TESSEROCR:
-        custom_config = r'--oem 3 --psm 7'
-        pytesseract.pytesseract.tesseract_cmd = r'C:\\Program Files\\Tesseract-OCR\\tesseract.exe'
-        word = pytesseract.image_to_string(img, output_type=pytesseract.Output.STRING, config=custom_config, lang="eng")
-    else:
-        word = tesserocr.image_to_text(Image.fromarray(img))
-    word = word.replace('0', 'o')
-    word = word.replace('2', 'z')
-    word = word.replace('\n', '').lower()
+    for c in range(len(cropped)):
+        char_result = []
+        for i in range(len(templates)):
+            res = cv2.matchTemplate(cropped[c][1], templates[i], cv2.TM_CCOEFF_NORMED)
+            _, max_val, _, _ = cv2.minMaxLoc(res)
+            char_result.append(max_val)
+        max_index = char_result.index(max(char_result))
+        word += chr(ord('a') + max_index)
+
     return word
 
 
 def prepare_for_matching(img, thresh):
     img = cv2.threshold(img, thresh, 255, cv2.THRESH_BINARY)[1]
-    return img
-
-
-def prepare_for_ocr(img, thresh):
-    img = cv2.threshold(img, thresh, 255, cv2.THRESH_BINARY_INV)[1]
-    bordersize = 8
-    img = cv2.copyMakeBorder(img, top=bordersize, bottom=bordersize, left=bordersize, right=bordersize, borderType=cv2.BORDER_CONSTANT, value=255)
-    img = cv2.resize(img, (img.shape[1] * 4, img.shape[0] * 4))
     return img
 
 
@@ -211,11 +211,12 @@ def army_units_handle(image, army_units, debug = False):
 
 def selected_single_handle(image, selected_singles, debug = False):
     selected_single = cv2.cvtColor(image[895:920, 810:1080], cv2.COLOR_BGR2GRAY)
-    selected_single = prepare_for_ocr(selected_single, 40)
+    selected_single = prepare_for_matching(selected_single, 40)
     if debug:
         cv2.imwrite(current_dir + "selected_single.png", selected_single)
     
     output = img_to_letters(selected_single)
+    print(output)
     min_dist = (100, '')
     for key in units_dictionaries.buildings:
         distance = lev(output, key)

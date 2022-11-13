@@ -4,10 +4,10 @@ from camera_view_processor import cam_processor
 import pyautogui
 
 
-# run this script then you have 4 seconds to get in a 1v1 ongoing match. It will print info.
+# run this script then you have 3 seconds to get in a 1v1 ongoing match. It will print info.
 
 
-time.sleep(4)
+time.sleep(3)
 
 start_time = time.time()
 infos = UI_processor(debug=True)

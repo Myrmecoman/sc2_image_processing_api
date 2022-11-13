@@ -1,5 +1,4 @@
 pyautogui
-pytesseract
 PIL
 python-Levenshtein
 opencv-python

@@ -14,12 +14,6 @@ Python is used for now even though we might need speed to do operations frequent
 Building bindings from C++ to python for the most intensive functions will need to be evaluated.
 The objective is 0.5 sec for the whole image segmentation process, in order to leave 1 or 2 sec for the futur bot to perform actions.
 
-# About the OCR (optical character recognition)
-Tesserocr is reputed faster and usually more precise than pytesseract, however it is more complicated to install.
-
-- If you want to use pytesseract, set the USE_TESSETOCR variable to False in the UI_processor.py script.
-- If you want to use tesserocr : https://github.com/sirfz/tesserocr
-
 # Files description
 - hotkey_helper : provides functions to easily do actions. This will only work if you have my keybinds (available in the keybinds folder), otherwise you can also change the keys in it to match your hotkeys.
 - clicker_helper : provides location to click on the middle or right window of the game.

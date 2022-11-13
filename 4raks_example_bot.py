@@ -62,7 +62,7 @@ x = 100
 y = 300
 
 # https://www.youtube.com/watch?v=X8aAAenFkrU&t=274s we can keep going but for now only print marines, when reaching the end of the array we keep making supply depots and marines
-build_order = ["scv", "supply depot", "scv", "scv", "barracks", "barracks", "barracks", "barracks", "scv", "supply depot"]
+build_order = ["scv", "supplydepot", "scv", "scv", "barracks", "barracks", "barracks", "barracks", "scv", "supplydepot"]
 barracks_pos = [] # save this to put them later in a control group
 start_time = 0
 while not keyboard.is_pressed("esc"):
@@ -101,7 +101,7 @@ while not keyboard.is_pressed("esc"):
     time.sleep(0.3)
     info = UI_processor(get_idle_workers=True, get_right_window_buttons_availability=True)
 
-    if (build_order[0] == "supply depot" and info.right_window_button_available[0][2]) or (build_order[0] == "barracks" and info.right_window_button_available[1][0]):
+    if (build_order[0] == "supplydepot" and info.right_window_button_available[0][2]) or (build_order[0] == "barracks" and info.right_window_button_available[1][0]):
         for j in range(x, 800, 200):
             breaking = False
             for i in range(y, 1610, 200):
@@ -117,7 +117,7 @@ while not keyboard.is_pressed("esc"):
                 
                 pyautogui.press(hotkey.scv_build_structure)
                 time.sleep(0.1)
-                if build_order[0] == "supply depot":
+                if build_order[0] == "supplydepot":
                     pyautogui.press(hotkey.scv_build_depot)
                 else:
                     pyautogui.press(hotkey.scv_build_barracks)
@@ -187,7 +187,7 @@ while not keyboard.is_pressed("esc"):
     info = UI_processor(get_supply=True, get_mineral=True, get_army_units=True)
     
     # if supply is not sufficient, build more depots
-    if ((info.supply_right - info.supply_left) <= 4) and (time.time() - start_time) > (units_dictionaries.buildings["supply depot"][2] + 3):
+    if ((info.supply_right - info.supply_left) <= 4) and (time.time() - start_time) > (units_dictionaries.buildings["supplydepot"][2] + 3):
         
         depot_info = UI_processor(get_mineral=True, get_idle_workers=True)
         while depot_info.minerals < 100:
