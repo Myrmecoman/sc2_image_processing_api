@@ -157,15 +157,10 @@ def img_to_letters(img):
     return word
 
 
-def prepare_for_matching(img, thresh):
-    img = cv2.threshold(img, thresh, 255, cv2.THRESH_BINARY)[1]
-    return img
-
-
 # multithreaded functions -------------------------------------------------------------------------------
 def supply_handle(image, supply_left, supply_right, debug = False):
     supply = image[22:34, 1765:1867, 2]
-    supply = prepare_for_matching(supply, 220)
+    supply = cv2.threshold(supply, 220, 255, cv2.THRESH_BINARY)[1]
     if debug:
         cv2.imwrite(current_dir + "supply.png", supply)
     supply_str = img_to_digits(supply, True)
@@ -178,8 +173,10 @@ def supply_handle(image, supply_left, supply_right, debug = False):
         supply_right[0] = int(supply_str[slash + 1:])
 
 def mineral_handle(image, minerals, debug = False):
-    mineral = image[22:34, 1519:1594, 2]
-    mineral = prepare_for_matching(mineral, 230)
+    mineral = image[22:34, 1519:1594]
+    left = np.array([230, 230, 230])
+    right = np.array([255, 255, 255])
+    mineral = cv2.inRange(mineral, left, right)
     if debug:
         cv2.imwrite(current_dir + "mineral.png", mineral)
     str_nb = img_to_digits(mineral)
@@ -188,8 +185,10 @@ def mineral_handle(image, minerals, debug = False):
     minerals[0] = int(str_nb)
 
 def gas_handle(image, gas, debug = False):
-    gas_temp = image[22:34, 1645:1712, 2]
-    gas_temp = prepare_for_matching(gas_temp, 230)
+    gas_temp = image[22:34, 1645:1712]
+    left = np.array([230, 230, 230])
+    right = np.array([255, 255, 255])
+    gas_temp = cv2.inRange(gas_temp, left, right)
     if debug:
         cv2.imwrite(current_dir + "gas.png", gas_temp)
     str_nb = img_to_digits(gas_temp)
@@ -199,7 +198,7 @@ def gas_handle(image, gas, debug = False):
 
 def idle_workers_handle(image, idle_workers, debug = False):
     idle_worker = cv2.cvtColor(image[749:764, 48:77], cv2.COLOR_BGR2GRAY)
-    idle_worker = prepare_for_matching(idle_worker, 80)
+    idle_worker = cv2.threshold(idle_worker, 80, 255, cv2.THRESH_BINARY)[1]
     if debug:
         cv2.imwrite(current_dir + "idle_workers.png", idle_worker)
     str_nb = img_to_digits_idle_scvs_and_army(idle_worker)
@@ -209,7 +208,7 @@ def idle_workers_handle(image, idle_workers, debug = False):
 
 def army_units_handle(image, army_units, debug = False):
     army_unit = cv2.cvtColor(image[749:763, 128:155], cv2.COLOR_BGR2GRAY)
-    army_unit = prepare_for_matching(army_unit, 80)
+    army_unit = cv2.threshold(army_unit, 80, 255, cv2.THRESH_BINARY)[1]
     if debug:
         cv2.imwrite(current_dir + "army_units.png", army_unit)
     str_nb = img_to_digits_idle_scvs_and_army(army_unit)
@@ -219,7 +218,7 @@ def army_units_handle(image, army_units, debug = False):
 
 def selected_single_handle(image, selected_singles, debug = False):
     selected_single = cv2.cvtColor(image[895:920, 810:1080], cv2.COLOR_BGR2GRAY)
-    selected_single = prepare_for_matching(selected_single, 40)
+    selected_single = cv2.threshold(selected_single, 40, 255, cv2.THRESH_BINARY)[1]
     if debug:
         cv2.imwrite(current_dir + "selected_single.png", selected_single)
     
@@ -277,7 +276,7 @@ def extraction_handle(image, minerals, gases, debug = False):
     mineral_list = []
     for pt in zip(*loc_mineral[::-1]):
         extraction = image[pt[1]:pt[1] + mineral_temp.shape[1] - 2, (pt[0] + 105):(pt[0] + 180), 2]
-        extraction = prepare_for_matching(extraction, 130)
+        extraction = cv2.threshold(extraction, 130, 255, cv2.THRESH_BINARY)[1]
         extraction[:, 12] = 0
         extraction[:, 24] = 0
         if debug:
@@ -296,7 +295,7 @@ def extraction_handle(image, minerals, gases, debug = False):
     gas_list = []
     for pt in zip(*loc_gas[::-1]):
         extraction = image[pt[1]:pt[1] + gas_temp.shape[1], (pt[0] + 103):(pt[0] + 150), 2]
-        extraction = prepare_for_matching(extraction, 130)
+        extraction = cv2.threshold(extraction, 130, 255, cv2.THRESH_BINARY)[1]
         extraction[:, 13] = 0
         extraction[:, 24] = 0
         if debug:

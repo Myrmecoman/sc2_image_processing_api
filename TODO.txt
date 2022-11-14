@@ -1,7 +1,6 @@
 Feel free to provide ideas / help on github !
 
-Get rid of the OCR and use pattern matching (should be faster + no burden of installing more libraries)
 Make the screenshot_maker class safer from segmentation errors.
 Provide info if building can be built here instead of reading minerals.
 Detect buildable terrain (certainly only feasible using CNNs).
-Build a CNN for basically any object detection.
+Fix control group selection using keyboard.
