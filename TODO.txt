@@ -1,6 +1,5 @@
 Feel free to provide ideas / help on github !
 
 Make the screenshot_maker class safer from segmentation errors.
-Provide info if building can be built here instead of reading minerals.
 Detect buildable terrain (certainly only feasible using CNNs).
 Fix control group selection using keyboard.
