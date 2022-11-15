@@ -15,12 +15,18 @@ current_dir = str(pathlib.Path(__file__).parent.absolute()) + "\\camera_view_pro
 
 def mineral_patches_handle(img, patches, debug = False):
     left = np.array([95, 32, 14])
-    right = np.array([255, 103, 68])
-    patch = cv2.inRange(img, left, right)
+    right = np.array([255, 110, 68])
+    color_patch = cv2.inRange(img, left, right)
+    hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+    hsv = hsv[:, :, 1]
+    hsv = cv2.inRange(hsv, 200, 255)
+    patch = cv2.bitwise_and(hsv, color_patch)
     kernel = np.ones((13, 13), np.uint8)
     patch = cv2.dilate(patch, kernel)
     if debug:
-        cv2.imwrite(current_dir + "mineral_patches_dilate.png", patch)
+        cv2.imwrite(current_dir + "mineral_patches_bitwise_and.png", patch)
+        cv2.imwrite(current_dir + "mineral_patches_hsv.png", hsv)
+        cv2.imwrite(current_dir + "mineral_patches_color.png", color_patch)
     kernel = np.ones((21, 21), np.uint8)
     patch = cv2.erode(patch, kernel)
     if debug:

@@ -130,7 +130,7 @@ def img_to_letters(img):
         if stats[i][cv2.CC_STAT_HEIGHT] < 5: # removing small components which are certainly i dots
             continue
         new_cropped = img[:, (stats[i][cv2.CC_STAT_LEFT] - 1):(stats[i][cv2.CC_STAT_LEFT] + stats[i][cv2.CC_STAT_WIDTH] + 1)]
-        cropped.append((centroids[i][0], cv2.copyMakeBorder(new_cropped, top=12, bottom=12, left=16, right=16, borderType=cv2.BORDER_CONSTANT, value=0)))
+        cropped.append((centroids[i][0], cv2.copyMakeBorder(new_cropped, top=14, bottom=14, left=18, right=18, borderType=cv2.BORDER_CONSTANT, value=0)))
     cropped.sort()
 
     # loading templates

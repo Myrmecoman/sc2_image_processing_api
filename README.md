@@ -1,7 +1,7 @@
 # SC2 image processing API
 In progress starcraft 2 image processing api to extract data from live sc2 1v1 games as terran.
 
-![Presentation](./readme_images/presentation.png?raw=true "Presentation")
+![Presentation](./docs/readme_images/presentation.png?raw=true "Presentation")
 
 # The idea behind the project
 This api should be able to provide meaningful information in the objective of building a bot afterwards.
@@ -28,4 +28,4 @@ This code expects to screenshot a usual 1v1 game against a human or an AI. The m
 This is currently being made for sc2 on a 1920x1080 screen. This is required since the program uses screenshots. I noticed that playing against no one in a custom match changes the minerals / gas / supply info position on the top right hand corner, which breaks the program. This could be supported later.
 This code was only tested with terrans so far and will require modifications if you want to use other races since for example the gas icon is different for zergs and will not be detected by this code.
 
-![Recommendations](./readme_images/recommended_colors_and_graphics.png?raw=true "Recommendations")
+![Recommendations](./docs/readme_images/recommended_colors_and_graphics.png?raw=true "Recommendations")
