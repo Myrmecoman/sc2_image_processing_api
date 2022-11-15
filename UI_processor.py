@@ -130,7 +130,7 @@ def img_to_letters(img):
         if stats[i][cv2.CC_STAT_HEIGHT] < 5: # removing small components which are certainly i dots
             continue
         new_cropped = img[:, (stats[i][cv2.CC_STAT_LEFT] - 1):(stats[i][cv2.CC_STAT_LEFT] + stats[i][cv2.CC_STAT_WIDTH] + 1)]
-        cropped.append((centroids[i][0], cv2.copyMakeBorder(new_cropped, top=10, bottom=10, left=14, right=14, borderType=cv2.BORDER_CONSTANT, value=0)))
+        cropped.append((centroids[i][0], cv2.copyMakeBorder(new_cropped, top=12, bottom=12, left=16, right=16, borderType=cv2.BORDER_CONSTANT, value=0)))
     cropped.sort()
 
     # loading templates
@@ -272,6 +272,13 @@ def extraction_handle(image, minerals, gases, debug = False):
     threshold = 0.9
     loc_mineral = np.where(res_mineral >= threshold)
     loc_gas = np.where(res_gas >= threshold)
+
+    if debug:
+        for pt in zip(*loc_mineral[::-1]):
+            cv2.rectangle(image, pt, (pt[0] + mineral_temp.shape[0], pt[1] + mineral_temp.shape[1]), (0, 0, 255), 2)
+        for pt in zip(*loc_gas[::-1]):
+            cv2.rectangle(image, pt, (pt[0] + gas_temp.shape[0], pt[1] + gas_temp.shape[1]), (0, 255, 0), 2)
+        cv2.imwrite(current_dir + "extraction.png", image)
 
     mineral_list = []
     for pt in zip(*loc_mineral[::-1]):
