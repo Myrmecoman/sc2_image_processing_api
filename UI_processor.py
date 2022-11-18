@@ -365,13 +365,13 @@ class UI_processor:
     mineral_extraction_infos = [None]*1      # list of ((int, int), (int, int)) corresponding to (( nb_workers/workers_max ), ( position_x, position_y )) where position is click position to select the command center
     gas_extraction_infos = [None]*1          # list of ((int, int), (int, int)) corresponding to (( nb_workers/workers_max ), ( position_x, position_y )) where position is click position to select the refinery
     right_window_button_available = [None]*1 # list of list of bool
-    base_locations = []                      # list of base locations on minimap
-    resources_mask = []                      # minimap resources
-    allies_mask = []                         # minimap allies
-    enemies_mask = []                        # minimap enemies
-    enemy_starting_base = []                 # enemy starting base position on the minimap, a tuple (int, int)
-    our_starting_base = []                   # our starting base position on the minimap, a tuple (int, int)
-    closest_enemy_position = []              # the closest enemy position on the minimap, a tuple (int, int, float) where it corresponds to (x, y, distance)
+    base_locations = None                    # list of base locations on minimap
+    resources_mask = None                    # minimap resources
+    allies_mask = None                       # minimap allies
+    enemies_mask = None                      # minimap enemies
+    enemy_starting_base = None               # enemy starting base position on the minimap, a tuple (int, int)
+    our_starting_base = None                 # our starting base position on the minimap, a tuple (int, int)
+    closest_enemy_position = None            # the closest enemy position on the minimap, a tuple (int, int, float) where it corresponds to (x, y, distance)
 
 
     def __init__(self,
@@ -505,6 +505,7 @@ class UI_processor:
             # finding approximate base locations and enemy base starting position
             if get_minimap_init_values:
                 # base locations
+                self.base_locations = []
                 kernel = np.ones((7, 7), np.uint8)
                 locations = copy.deepcopy(self.resources_mask)
                 locations = cv2.dilate(locations, kernel)
