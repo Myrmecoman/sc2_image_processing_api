@@ -7,6 +7,7 @@ from PIL import Image
 from Levenshtein import distance as lev
 import units_dictionaries
 import mss
+import math
 import random
 
 
@@ -370,6 +371,7 @@ class UI_processor:
     enemies_mask = []                        # minimap enemies
     enemy_starting_base = []                 # enemy starting base position on the minimap, a tuple (int, int)
     our_starting_base = []                   # our starting base position on the minimap, a tuple (int, int)
+    closest_enemy_position = []              # the closest enemy position on the minimap, a tuple (int, int, float) where it corresponds to (x, y, distance)
 
 
     def __init__(self,
@@ -386,7 +388,8 @@ class UI_processor:
     get_game_image = False,
     get_extraction_rate = False,
     get_minimap_init_values = False,
-    get_right_window_buttons_availability = False): # should only be called once at game startup, this detects mineral patches, the enemy base position and our position
+    get_right_window_buttons_availability = False,
+    get_closest_enemy_position = False): # should only be called once at game startup, this detects mineral patches, the enemy base position and our position
 
         if debug:
             get_supply = True
@@ -402,6 +405,7 @@ class UI_processor:
             get_extraction_rate = True
             get_minimap_init_values = True
             get_right_window_buttons_availability = True
+            get_closest_enemy_position = True
         
         if get_minimap_init_values:
             get_minimap = True
@@ -434,6 +438,8 @@ class UI_processor:
             threads[9] = Thread(target=game_handle, args=(self.image, self.game, debug))
         if get_extraction_rate:
             threads[10] = Thread(target=extraction_handle, args=(self.image, self.mineral_extraction_infos, self.gas_extraction_infos, debug))
+        if get_right_window_buttons_availability:
+            threads[11] = Thread(target=right_availability_handle, args=(self.image, self.right_window_button_available, debug))
         if get_right_window_buttons_availability:
             threads[11] = Thread(target=right_availability_handle, args=(self.image, self.right_window_button_available, debug))
         
@@ -474,6 +480,27 @@ class UI_processor:
             left = np.array([0, 0, 190])
             right = np.array([0, 0, 255])
             self.enemies_mask = cv2.inRange(self.minimap, left, right)
+            # getting smallest distance between us and the enemies, and getting the coordinates of the closest enemy position
+            kernel = np.ones((7, 7), np.uint8)
+            allies_dilated = copy.deepcopy(self.allies_mask)
+            allies_dilated = cv2.dilate(allies_dilated, kernel)
+            enemies_dilated = copy.deepcopy(self.enemies_mask)
+            enemies_dilated = cv2.dilate(enemies_dilated, kernel)
+            nb_allies, _, _, centroids_allies = cv2.connectedComponentsWithStats(allies_dilated, 4, cv2.CV_32S)
+            nb_enemies, _, _, centroids_enemies = cv2.connectedComponentsWithStats(enemies_dilated, 4, cv2.CV_32S)
+            if nb_enemies != 0:
+                min_pos = (0, 0)
+                min_dist = 100000
+                for x in range(1, nb_allies):
+                    i = centroids_allies[x]
+                    for y in range(1, nb_enemies):
+                        j = centroids_enemies[y]
+                        dist = (i[0] - j[0]) * (i[0] - j[0]) + (i[1] - j[1]) * (i[1] - j[1])
+                        if dist < min_dist:
+                            min_dist = dist
+                            min_pos = j
+                min_dist = math.sqrt(min_dist)
+                self.closest_enemy_position = (int(min_pos[0]), int(min_pos[1]), min_dist)
 
             # finding approximate base locations and enemy base starting position
             if get_minimap_init_values:
@@ -518,6 +545,9 @@ class UI_processor:
                 cv2.imwrite(current_dir + "ressources.png", self.resources_mask)
                 cv2.imwrite(current_dir + "allies.png", self.allies_mask)
                 cv2.imwrite(current_dir + "enemies.png", self.enemies_mask)
+                closest_enemy_pos = allies_dilated + enemies_dilated * 0.7
+                closest_enemy_pos[self.closest_enemy_position[1]][self.closest_enemy_position[0]] = 100
+                cv2.imwrite(current_dir + "closest_enemy_pos.png", closest_enemy_pos)
 
         if debug:
             print("supply =                   " + str(self.supply_left) + "/" + str(self.supply_right))
@@ -531,4 +561,5 @@ class UI_processor:
             print("enemy base position =      " + str(self.enemy_starting_base))
             print("our base position =        " + str(self.our_starting_base))
             print("right availability =       " + str(self.right_window_button_available))
+            print("closest_enemy_pos =        " + str(self.closest_enemy_position))
             cv2.imwrite(current_dir + "screenshot.png", self.image)
