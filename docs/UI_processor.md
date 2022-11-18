@@ -117,3 +117,9 @@ Tells if a building is avfailable for construction, this uses saturation values.
 
 ![a](./docs_images/building.png?raw=true "a")
 ![a](./docs_images/right_window_availability.png?raw=true "a")
+
+### Closest positions
+
+Gives closest enemy positions and ally positions, along with the distance between each other.
+
+![a](./docs_images/closest_enemy_pos.png?raw=true "a")
