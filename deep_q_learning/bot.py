@@ -11,18 +11,23 @@ import random
 from sc2.ids.unit_typeid import UnitTypeId
 from sc2.unit import Unit
 from sc2.units import Units
-import asyncio
+from threading import Thread
 
 
 map_names = ["AcropolisLE", "DiscoBloodbathLE", "EphemeronLE", "ThunderbirdLE", "TritonLE", "WintersGateLE", "WorldofSleepersLE"]
 current_dir = str(pathlib.Path(__file__).parent.absolute()) + ""
-state = [12, 15, 0, 50, 0, 125, 0] # supply, supply max, army_count, mineral, gas, map value, is enemy close ?
-timer = -1
-total_timer = time.time()
-last_reward = -1
+state = np.array([12, 15, 0, 50, 0, 125, 0]) # supply, supply max, army_count, mineral, gas, map value, is enemy close ?
+nb_actions = 13
 
 
 class BasicBot(BotAI):
+
+
+    def __init__(self):
+        global state
+        self.timer = -1
+        self.last_reward = -1
+        state = np.array([12, 15, 0, 50, 0, 125, 0])
 
 
     async def act(self, action):
@@ -128,73 +133,71 @@ class BasicBot(BotAI):
         attacked = 0
         if self.dist_enemies() < 400:
             attacked = 1
-        state = [self.supply_used, self.supply_cap, self.army_count, self.minerals, self.vespene, 125, attacked]
+        state = np.array([self.supply_used, self.supply_cap, self.army_count, self.minerals, self.vespene, 125, attacked])
 
 
-    def reset_state(self):
+    # leaving if we have no more supply
+    async def kill_session(self):
+        await self.client.leave()
+
+
+    async def step(self, action):
         global state
-        global last_reward
 
-        last_reward = -1
-        state = [self.supply_used, self.supply_cap, self.army_count, self.minerals, self.vespene, 125, 0]
+        self.timer = self.time
+        self.client._renderer._minimap_image.save(current_dir + "\\temp.bmp")
+        self.minimap = cv2.imread(current_dir + "\\temp.bmp")
 
-
-    def step_sync(self):
-        global state
-        global last_reward
+        await self.act(action)
 
         self.get_state()
         reward = self.get_reward()
-        if last_reward == -1:
-            last_reward = reward
+        if self.last_reward == -1:
+            self.last_reward = reward
             return state, -1, False
-
-        diff = (reward - last_reward) * 10 # -1 so that if nothing happens, we keep losing rewards
+        diff = (reward - self.last_reward) * 10 # -1 so that if nothing happens, we keep losing rewards
         if diff == 0:
             diff = -1
         if diff > 0:
             diff *= 5
-        last_reward = reward
+        self.last_reward = reward
         return state, diff, (self.supply_used == 0)
-    
-
-    async def step(self, action):
-        await self.act(action)
-        return self.step_sync()
 
 
     async def on_step(self, iteration: int):
-        global timer
-
-        if iteration == 0:
-            self.reset_state()
-
-        if self.supply_left < 6 and not self.already_pending(UnitTypeId.SUPPLYDEPOT):
-            await self.act(7)
-        if self.structures(UnitTypeId.BARRACKS).amount < 4:
-            await self.act(8)
-        if self.army_count > 15:
-            await self.act(1)
-        else:
-            await self.act(3)
-
-        if self.time - timer >= 1: # update every in game second
-
-            timer = self.time
-            self.client._renderer._minimap_image.save(current_dir + "\\temp.bmp")
-            self.minimap = cv2.imread(current_dir + "\\temp.bmp")
-            state, step_score, done = await self.step(5)
-            print(step_score)
+        return
             
-            # leaving if we have no more supply
-            if self.supply_used == 0:
-                await self.client.leave()
-                return
 
 
-run_game(maps.get(map_names[random.randint(0, len(map_names) - 1)]),
-        [Bot(Race.Terran, BasicBot()), Computer(Race.Random, Difficulty.Medium)], # VeryHard
-        realtime=False,
-        rgb_render_config={'window_size': (1280, 720), 'minimap_size': (256, 256)})
+class env:
 
-print("Total time : " + str(time.time() - total_timer))
+
+    bot = [None]*1
+
+
+    def __init__(self):
+        self.thread = None
+
+
+    def launch_game(self, bot):
+        total_timer = time.time()
+        run_game(maps.get(map_names[random.randint(0, len(map_names) - 1)]),
+                [Bot(Race.Terran, bot[0]), Computer(Race.Random, Difficulty.VeryEasy)], # VeryHard, VeryEasy
+                realtime=False,
+                rgb_render_config={'window_size': (1280, 720), 'minimap_size': (256, 256)})
+        print("Game time : " + str(time.time() - total_timer))
+
+
+    def step(self, action):
+        return self.bot.step(action)
+
+
+    def reset(self):
+        if self.thread is not None:
+            self.thread.join()
+        if self.bot[0] is not None:
+            self.bot[0].kill_session()
+        self.bot[0] = BasicBot()
+        self.thread = Thread(target=self.launch_game, args=(self.bot))
+        self.thread.start()
+        return np.array([12, 15, 0, 50, 0, 125, 0])
