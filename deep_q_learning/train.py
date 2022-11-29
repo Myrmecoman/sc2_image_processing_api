@@ -1,4 +1,3 @@
-# Importing the classes 
 import torch
 import torch.nn as nn
 import numpy as np
@@ -6,22 +5,20 @@ import random
 import torch.nn.functional as F 
 import torch.optim as optim
 from collections import namedtuple, deque
-from sc2 import maps
-from sc2.player import Bot, Computer
-from sc2.main import run_game
-from sc2.data import Race, Difficulty
-from sc2.bot_ai import BotAI
 import numpy as np
 import pathlib
 import cv2
 import time
 import random
+from threading import Thread
+from sc2 import maps
+from sc2.player import Bot, Computer
+from sc2.main import run_game
+from sc2.data import Race, Difficulty
+from sc2.bot_ai import BotAI
 from sc2.ids.unit_typeid import UnitTypeId
 from sc2.unit import Unit
 from sc2.units import Units
-from threading import Thread
-
-
 # source for training : https://github.com/tawsifkamal/Deep-Q-Learning-CartPole-v0/blob/main/CartPoleDQL.py
 
 
@@ -33,8 +30,6 @@ bot = [None]*1
 
 
 class BasicBot(BotAI):
-
-
     def __init__(self):
         self.timer = -1
         self.last_reward = -1
@@ -44,7 +39,6 @@ class BasicBot(BotAI):
     async def act(self, action):
         ccs: Units = self.townhalls
         cc: Unit = ccs.random
-
         if action == 0: # do nothing
             return
         elif action == 1: # attack
@@ -162,9 +156,9 @@ class BasicBot(BotAI):
         if self.last_reward == -1:
             self.last_reward = reward
             return self.step_state, -1, False
-        diff = (reward - self.last_reward) * 10 # -1 so that if nothing happens, we keep losing rewards
+        diff = (reward - self.last_reward) * 10
         if diff == 0:
-            diff = -1
+            diff = -1 # -1 so that if nothing happens, we keep losing rewards
         if diff > 0:
             diff *= 5
         self.last_reward = reward
@@ -177,7 +171,6 @@ class BasicBot(BotAI):
 
 class env:
     global bot
-
     def __init__(self):
         self.thread = None
 
@@ -274,7 +267,6 @@ def get_action(input, model, epsilon, env):
     if np.random.rand() <= epsilon:
         action = random.randint(0, bot.nb_actions - 1)
         return action
-
     else:
         qvalue = model.forward(input)
         _, action = torch.max(qvalue, 1)
