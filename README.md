@@ -29,3 +29,7 @@ This is currently being made for sc2 on a 1920x1080 screen. This is required sin
 This code was only tested with terrans so far and will require modifications if you want to use other races since for example the gas icon is different for zergs and will not be detected by this code.
 
 ![Recommendations](./docs/readme_images/recommended_colors_and_graphics.png?raw=true "Recommendations")
+
+# The deep q learning folder
+
+This folder contains file in order to simulate the available actions from the API into a bot vs bot game. The advantage is rapidity, as the bot games are about 8 times faster.
