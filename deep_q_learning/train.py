@@ -34,6 +34,7 @@ class BasicBot(BotAI):
         self.timer = -1
         self.last_reward = -1
         self.step_state = np.array([12, 15, 0, 50, 0, 125, 0])
+        self.kill_signal = False
 
 
     async def act(self, action):
@@ -139,11 +140,6 @@ class BasicBot(BotAI):
         self.step_state = np.array([self.supply_used, self.supply_cap, self.army_count, self.minerals, self.vespene, 125, attacked])
 
 
-    # leaving if we have no more supply
-    async def kill_session(self):
-        await self.client.leave()
-
-
     async def step(self, action):
         self.timer = self.time
         self.client._renderer._minimap_image.save(current_dir + "\\temp.bmp")
@@ -166,15 +162,15 @@ class BasicBot(BotAI):
 
 
     async def on_step(self, iteration: int):
-        return
+        if self.kill_signal:
+            await self.client.leave()
             
-
+#self.thread = None
+#thread = Thread(target=self.launch_game)
+#thread.start()
+#thread.join()
 class env:
     global bot
-    def __init__(self):
-        self.thread = None
-
-
     def launch_game(self):
         total_timer = time.time()
         run_game(maps.get(map_names[random.randint(0, len(map_names) - 1)]),
@@ -185,18 +181,13 @@ class env:
 
 
     def reset(self):
-        if self.thread is not None:
-            self.thread.join()
         if bot[0] is not None:
-            bot[0].kill_session()
+            bot[0].kill_signal = True
         bot[0] = BasicBot()
-        self.thread = Thread(target=self.launch_game)
-        self.thread.start()
         return np.array([12, 15, 0, 50, 0, 125, 0])
 
 
-# training ----------------------------------------------------------------------------------------------------------------------------------------------------
-# Defining the Neural Network 
+# Defining the Neural Network + memory  ----------------------------------------------------------------------------------------------------------------------------------------------------
 class Network(nn.Module):
     def __init__(self, state_shape, action_shape):
         super().__init__()
@@ -285,7 +276,7 @@ discount_factor = 0.99
 replay_memory = Memory(100000)
 learning_rate = 0.001
 batch_size = 64
-steps_until_traning = 0
+steps_until_training = 0
 
 # Setting a device for pytorch (if available)
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -315,7 +306,7 @@ for episode in range(100): # initially set to 1000
         if bot[0].time - bot[0].timer < 1:
             continue
 
-        steps_until_traning += 1
+        steps_until_training += 1
         action = get_action(state, policy_net, epsilon, env)
         next_state, reward, done, info = bot.bot[0].step(action)
         next_state = torch.from_numpy(next_state).float().unsqueeze(0).to(device)
@@ -331,7 +322,7 @@ for episode in range(100): # initially set to 1000
         replay_memory.push(state, action_one_hot, reward, next_state, terminal)
 
         # for every 4 time_steps, the networks will train
-        if steps_until_traning % 4 == 0 or done:
+        if steps_until_training % 4 == 0 or done:
             if len(replay_memory) > batch_size:
                 batch = replay_memory.sample(batch_size)
                 loss = train_model(policy_net, target_net, optimizer, batch)
@@ -341,10 +332,10 @@ for episode in range(100): # initially set to 1000
         
         if done: 
             print(f'Total training rewards: {total_rewards_per_episode} after n steps = {episode} with eps: {epsilon} with action {action}')
-            if steps_until_traning >= 100:
+            if steps_until_training >= 100:
                 print('Copying main network weights to the target network weights')
                 target_net.load_state_dict(policy_net.state_dict())
-                steps_until_traning = 0
+                steps_until_training = 0
             break
         
     # Updating the current exploration rate (epsilon) by applying the decay rate 
