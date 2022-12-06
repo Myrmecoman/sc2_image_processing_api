@@ -145,7 +145,10 @@ class BasicBot(BotAI):
 
     async def act(self, action):
         ccs: Units = self.townhalls
+        if ccs.amount  <= 0:
+            return
         cc: Unit = ccs.random
+        
         if action == 0: # do nothing
             return
         elif action == 1: # attack
@@ -279,6 +282,7 @@ class BasicBot(BotAI):
         global batch_size
         global optimizer
         global episode
+        global nb_actions
 
         #Iterating in current episode 
         if self.time - self.timer < 1:
@@ -286,14 +290,14 @@ class BasicBot(BotAI):
 
         steps_until_training += 1
         action = get_action(state, policy_net, epsilon)
-        next_state, reward, done = self.step(action)
+        next_state, reward, done = await self.step(action)
         next_state = torch.from_numpy(next_state).float().unsqueeze(0).to(device)
 
         # terminal = done variable; if done is True, a 0 will be returned. Otherwise, a 1 will be returned
         terminal = 0 if done else 1
 
         # turning the action into a vector with shape (2,)
-        action_one_hot = np.zeros(2)
+        action_one_hot = np.zeros(nb_actions)
         action_one_hot[action] = 1 
 
         # pushing the experience into the replay memory list 
