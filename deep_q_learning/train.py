@@ -21,20 +21,126 @@ from sc2.unit import Unit
 from sc2.units import Units
 # source for training : https://github.com/tawsifkamal/Deep-Q-Learning-CartPole-v0/blob/main/CartPoleDQL.py
 
+# Defining hyper-parameters     
+epsilon = 1
+max_exploration_rate = 1
+min_exploration_rate = 0.01
+exp_decay = 0.001
+discount_factor = 0.99
+learning_rate = 0.001
+batch_size = 64
+steps_until_training = 0
+total_rewards_per_episode = 0
+episode = 0
+# Setting a device for pytorch (if available)
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
+# a few more usefull variables
 map_names = ["AcropolisLE", "DiscoBloodbathLE", "EphemeronLE", "ThunderbirdLE", "TritonLE", "WintersGateLE", "WorldofSleepersLE"]
 current_dir = str(pathlib.Path(__file__).parent.absolute())
 lenstate = 7
 nb_actions = 13
-bot = [None]*1
+state = None
+done = False
 
 
+# Defining the Neural Network + memory  ----------------------------------------------------------------------------------------------------------------------------------------------------
+class Network(nn.Module):
+    def __init__(self, state_shape, action_shape):
+        super().__init__()
+        self.states = state_shape
+        self.actions = action_shape
+
+        # defining our layers
+        self.fc1 = nn.Linear(in_features = self.states, out_features = 24)
+        self.fc2 = nn.Linear(in_features = 24, out_features = 12)
+        self.out = nn.Linear(in_features = 12, out_features = self.actions)
+
+    
+    # forward method 
+    def forward(self, t): 
+        t = F.relu(self.fc1(t))
+        t = F.relu(self.fc2(t))
+        t = self.out(t)
+        return t 
+
+# Defining the experience tuple 
+Experience = namedtuple('Experience', ('state', 'action', 'reward', 'next_state', 'terminal'))
+
+class Memory(object):
+    def __init__(self, capacity):
+        self.memory = deque(maxlen=capacity)
+        self.capacity = capacity
+
+    def push(self, state, next_state, action, reward, mask):
+        self.memory.append(Experience(state, next_state, action, reward, mask))
+
+    def sample(self, batch_size):
+        experience = random.sample(self.memory, batch_size)
+        batch = Experience(*zip(*experience))
+        return batch
+
+    def __len__(self):
+        return len(self.memory)
+
+def train_model(policy_net, target_net, optimizer, batch):
+    # Extracting states, next_states, actions, rewards, and done variable in current batch
+    states = torch.stack(batch.state) 
+    next_states = torch.stack(batch.next_state)  
+    actions = torch.Tensor(batch.action).float().to(device) 
+    rewards = torch.Tensor(batch.reward).to(device)
+    terminals = torch.Tensor(batch.terminal).to(device)
+
+    # Predicting the current and next_state-action pair q-values 
+    policy_qs = policy_net(states).squeeze(1) 
+    target_qs = target_net(next_states).squeeze(1)  
+    policy_qs = torch.sum(policy_qs.mul(actions), dim=1)  
+
+    # Applying the Bellman Equation: R(s, a) + max_a' Q(s', a')
+    target_qs = rewards + terminals * discount_factor * target_qs.max(1)[0]
+    
+    # Hubber-Loss Function is applied 
+    loss = F.mse_loss(policy_qs, target_qs.detach()) 
+
+    # Calculating Gradients + Back Propagation and Gradient Descent
+    optimizer.zero_grad() 
+    loss.backward() 
+    optimizer.step() 
+    return loss
+
+def get_action(input, model, epsilon):
+    global nb_actions
+
+    # Epsilon-Greedy Strategy 
+    if np.random.rand() <= epsilon:
+        action = random.randint(0, nb_actions - 1)
+        return action
+    else:
+        qvalue = model.forward(input)
+        _, action = torch.max(qvalue, 1)
+        return action.cpu().numpy()[0]
+
+
+replay_memory = Memory(100000)
+# Defining neural networks
+policy_net = Network(lenstate, nb_actions).to(device) # state length, number possible actions
+target_net = Network(lenstate, nb_actions).to(device)
+# Setting both the policy_net and target_net in training mode
+policy_net.train()
+target_net.train()
+# Setting the same parameters as the policy net for our target net 
+target_net.load_state_dict(policy_net.state_dict())
+# Using the Adam Optimizer
+optimizer = optim.Adam(params = policy_net.parameters(), lr = learning_rate)
+
+
+# bot code --------------------------------------------------------------------------------------------------------
 class BasicBot(BotAI):
+
     def __init__(self):
         self.timer = -1
         self.last_reward = -1
         self.step_state = np.array([12, 15, 0, 50, 0, 125, 0])
-        self.kill_signal = False
 
 
     async def act(self, action):
@@ -162,153 +268,25 @@ class BasicBot(BotAI):
 
 
     async def on_step(self, iteration: int):
-        if self.kill_signal:
-            await self.client.leave()
-            
-#self.thread = None
-#thread = Thread(target=self.launch_game)
-#thread.start()
-#thread.join()
-class env:
-    global bot
-    def launch_game(self):
-        total_timer = time.time()
-        run_game(maps.get(map_names[random.randint(0, len(map_names) - 1)]),
-                [Bot(Race.Terran, bot[0]), Computer(Race.Random, Difficulty.VeryEasy)], # VeryHard, VeryEasy
-                realtime=False,
-                rgb_render_config={'window_size': (1280, 720), 'minimap_size': (256, 256)})
-        print("Game time : " + str(time.time() - total_timer))
+        global steps_until_training
+        global total_rewards_per_episode
+        global policy_net
+        global target_net
+        global replay_memory
+        global epsilon
+        global state
+        global done
+        global batch_size
+        global optimizer
+        global episode
 
-
-    def reset(self):
-        if bot[0] is not None:
-            bot[0].kill_signal = True
-        bot[0] = BasicBot()
-        return np.array([12, 15, 0, 50, 0, 125, 0])
-
-
-# Defining the Neural Network + memory  ----------------------------------------------------------------------------------------------------------------------------------------------------
-class Network(nn.Module):
-    def __init__(self, state_shape, action_shape):
-        super().__init__()
-        self.states = state_shape
-        self.actions = action_shape
-
-        # defining our layers
-        self.fc1 = nn.Linear(in_features = self.states, out_features = 24)
-        self.fc2 = nn.Linear(in_features = 24, out_features = 12)
-        self.out = nn.Linear(in_features = 12, out_features = self.actions)
-
-    
-    # forward method 
-    def forward(self, t): 
-        t = F.relu(self.fc1(t))
-        t = F.relu(self.fc2(t))
-        t = self.out(t)
-        return t 
-
-# Defining the experience tuple 
-Experience = namedtuple('Experience', ('state', 'action', 'reward', 'next_state', 'terminal'))
-
-
-class Memory(object):
-    def __init__(self, capacity):
-        self.memory = deque(maxlen=capacity)
-        self.capacity = capacity
-
-    def push(self, state, next_state, action, reward, mask):
-        self.memory.append(Experience(state, next_state, action, reward, mask))
-
-    def sample(self, batch_size):
-        experience = random.sample(self.memory, batch_size)
-        batch = Experience(*zip(*experience))
-        return batch
-
-    def __len__(self):
-        return len(self.memory)
-
-
-def train_model(policy_net, target_net, optimizer, batch):
-    # Extracting states, next_states, actions, rewards, and done variable in current batch
-    states = torch.stack(batch.state) 
-    next_states = torch.stack(batch.next_state)  
-    actions = torch.Tensor(batch.action).float().to(device) 
-    rewards = torch.Tensor(batch.reward).to(device)
-    terminals = torch.Tensor(batch.terminal).to(device)
-
-    # Predicting the current and next_state-action pair q-values 
-    policy_qs = policy_net(states).squeeze(1) 
-    target_qs = target_net(next_states).squeeze(1)  
-    policy_qs = torch.sum(policy_qs.mul(actions), dim=1)  
-
-    # Applying the Bellman Equation: R(s, a) + max_a' Q(s', a')
-    target_qs = rewards + terminals * discount_factor * target_qs.max(1)[0]
-    
-    # Hubber-Loss Function is applied 
-    loss = F.mse_loss(policy_qs, target_qs.detach()) 
-
-    # Calculating Gradients + Back Propagation and Gradient Descent
-    optimizer.zero_grad() 
-    loss.backward() 
-    optimizer.step() 
-    return loss
-
-def get_action(input, model, epsilon, env):
-    # Epsilon-Greedy Strategy 
-    if np.random.rand() <= epsilon:
-        action = random.randint(0, bot.nb_actions - 1)
-        return action
-    else:
-        qvalue = model.forward(input)
-        _, action = torch.max(qvalue, 1)
-        return action.cpu().numpy()[0]
-
-
-# main code ------------------------------------------------------------------------------------------------------------------------------------------------------
-# defining environment
-env = env()
-# Defining hyper-paramaters     
-epsilon = 1
-max_exploration_rate = 1
-min_exploration_rate = 0.01
-exp_decay = 0.001
-discount_factor = 0.99
-replay_memory = Memory(100000)
-learning_rate = 0.001
-batch_size = 64
-steps_until_training = 0
-
-# Setting a device for pytorch (if available)
-device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-
-# Defining neural networks
-policy_net = Network(lenstate, nb_actions).to(device) # state length, number possible actions
-target_net = Network(lenstate, nb_actions).to(device)
-
-# Setting the same parameters as the policy net for our target net 
-target_net.load_state_dict(policy_net.state_dict())
-
-# Using the Adam Optimizer
-optimizer = optim.Adam(params = policy_net.parameters(), lr = learning_rate)
-
-# Setting both the policy_net and target_net in training mode
-policy_net.train()
-target_net.train()
-
-# Iterating through episodes 
-for episode in range(100): # initially set to 1000
-    state = torch.Tensor(env.reset()).unsqueeze(0).to(device)
-    total_rewards_per_episode = 0
-    done = False
-
-    #Iterating through time_steps in current episode 
-    while not done:
-        if bot[0].time - bot[0].timer < 1:
-            continue
+        #Iterating in current episode 
+        if self.time - self.timer < 1:
+            return
 
         steps_until_training += 1
-        action = get_action(state, policy_net, epsilon, env)
-        next_state, reward, done, info = bot.bot[0].step(action)
+        action = get_action(state, policy_net, epsilon)
+        next_state, reward, done = self.step(action)
         next_state = torch.from_numpy(next_state).float().unsqueeze(0).to(device)
 
         # terminal = done variable; if done is True, a 0 will be returned. Otherwise, a 1 will be returned
@@ -336,7 +314,26 @@ for episode in range(100): # initially set to 1000
                 print('Copying main network weights to the target network weights')
                 target_net.load_state_dict(policy_net.state_dict())
                 steps_until_training = 0
-            break
-        
+            await self.client.leave()
+            return
+
+
+def launch_game():
+    total_timer = time.time()
+    run_game(maps.get(map_names[random.randint(0, len(map_names) - 1)]),
+            [Bot(Race.Terran, BasicBot()), Computer(Race.Random, Difficulty.VeryEasy)], # VeryHard, VeryEasy
+            realtime=False,
+            rgb_render_config={'window_size': (1280, 720), 'minimap_size': (256, 256)})
+    print("Game time : " + str(time.time() - total_timer))
+
+# main code ------------------------------------------------------------------------------------------------------------------------------------------------------
+# Iterating through episodes 
+for episode in range(100): # initially set to 1000
+    total_rewards_per_episode = 0
+    state = torch.Tensor([12, 15, 0, 50, 0, 125, 0]).unsqueeze(0).to(device)
+    done = False
+
+    launch_game()
+
     # Updating the current exploration rate (epsilon) by applying the decay rate 
     epsilon = min_exploration_rate + (max_exploration_rate - min_exploration_rate) * np.exp(-exp_decay * episode)
