@@ -19,6 +19,7 @@ from sc2.bot_ai import BotAI
 from sc2.ids.unit_typeid import UnitTypeId
 from sc2.unit import Unit
 from sc2.units import Units
+import pyglet
 # source for training : https://github.com/tawsifkamal/Deep-Q-Learning-CartPole-v0/blob/main/CartPoleDQL.py
 
 # Defining hyper-parameters     
@@ -207,8 +208,8 @@ class BasicBot(BotAI):
         right = np.array([0, 255, 0])
         allies_dilated = cv2.inRange(self.minimap, left, right)
         # getting enemies
-        left = np.array([130, 0, 0])
-        right = np.array([255, 0, 0])
+        left = np.array([0, 0, 130])
+        right = np.array([0, 0, 255])
         enemies_dilated = cv2.inRange(self.minimap, left, right)
         # dilating
         kernel = np.ones((7, 7), np.uint8)
@@ -251,8 +252,12 @@ class BasicBot(BotAI):
 
     async def step(self, action):
         self.timer = self.time
-        self.client._renderer._minimap_image.save(current_dir + "\\temp.bmp")
-        self.minimap = cv2.imread(current_dir + "\\temp.bmp")
+        img = self.client._renderer._minimap_image
+        width, height = img.width, img.height
+        data = img.get_data('RGB', img.width * 3)  # get the raw pixel data as a bytes object
+        arr = np.frombuffer(data, dtype=np.uint8)  # convert the data to a NumPy array
+        arr = arr.reshape(height, width, 3)  # reshape the array to the correct dimensions
+        self.minimap = arr
 
         await self.act(action)
 
