@@ -289,6 +289,7 @@ class BasicBot(BotAI):
         global episode
         global nb_actions
 
+        
         #Iterating in current episode 
         if self.time - self.timer < 1:
             return
@@ -316,8 +317,10 @@ class BasicBot(BotAI):
 
         state = next_state
         total_rewards_per_episode += reward
-        
-        if done: 
+
+        ccs: Units = self.townhalls
+        if done or ccs.amount <= 0:
+            done = True
             print(f'Total training rewards: {total_rewards_per_episode} after n steps = {episode} with eps: {epsilon} with action {action}')
             if steps_until_training >= 100:
                 print('Copying main network weights to the target network weights')
@@ -330,7 +333,7 @@ class BasicBot(BotAI):
 def launch_game():
     total_timer = time.time()
     run_game(maps.get(map_names[random.randint(0, len(map_names) - 1)]),
-            [Bot(Race.Terran, BasicBot()), Computer(Race.Random, Difficulty.VeryEasy)], # VeryHard, VeryEasy
+            [Bot(Race.Terran, BasicBot()), Computer(Race.Random, Difficulty.Easy)], # VeryHard, VeryEasy
             realtime=False,
             rgb_render_config={'window_size': (1280, 720), 'minimap_size': (256, 256)})
     print("Game time : " + str(time.time() - total_timer))
